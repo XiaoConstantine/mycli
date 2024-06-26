@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	myTerm "mycli/term"
+
 	"github.com/briandowns/spinner"
 	"github.com/cli/safeexec"
 	"github.com/google/shlex"
@@ -391,7 +393,7 @@ func (s *IOStreams) TempFile(dir, pattern string) (*os.File, error) {
 }
 
 func System() *IOStreams {
-	terminal := ghTerm.FromEnv()
+	terminal := myTerm.FromEnv()
 
 	var stdout fileWriter = os.Stdout
 	// On Windows with no virtual terminal processing support, translate ANSI escape
@@ -483,7 +485,7 @@ func Test() (*IOStreams, *bytes.Buffer, *bytes.Buffer, *bytes.Buffer) {
 }
 
 func isTerminal(f *os.File) bool {
-	return ghTerm.IsTerminal(f) || isCygwinTerminal(f.Fd())
+	return myTerm.IsTerminal(f) || isCygwinTerminal(f.Fd())
 }
 
 func isCygwinTerminal(fd uintptr) bool {
