@@ -28,11 +28,11 @@ func main() {
 }
 
 func mainRun() exitCode {
-	rootCmd, err := cmd.NewRootCmd()
 	// stderr := cmdFactory.IOStreams.ErrOut
 	iostream := iostreams.System()
 	stderr := iostream.ErrOut
 	ctx := context.Background()
+	rootCmd, err := cmd.NewRootCmd(iostream)
 
 	if err != nil {
 		fmt.Fprint(stderr, "failed to create root command: %s\n", err)
@@ -44,5 +44,4 @@ func mainRun() exitCode {
 
 	}
 	return exitOK
-
 }
