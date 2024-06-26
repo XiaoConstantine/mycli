@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"mycli/cmd"
+	"mycli/iostreams"
 )
 
 type exitCode int
@@ -29,15 +30,17 @@ func main() {
 func mainRun() exitCode {
 	rootCmd, err := cmd.NewRootCmd()
 	// stderr := cmdFactory.IOStreams.ErrOut
+	iostream := iostreams.System()
+	stderr := iostream.ErrOut
 	ctx := context.Background()
 
 	if err != nil {
-		fmt.Println("failed to create root command: %s\n", err)
+		fmt.Fprint(stderr, "failed to create root command: %s\n", err)
 		return exitError
 	}
 	if command, err := rootCmd.ExecuteContextC(ctx); err != nil {
 		// printError(stderr, err, cmd, hasDebug)
-		fmt.Println("%s", command)
+		fmt.Fprint(stderr, "Error %s", err, command)
 
 	}
 	return exitOK
