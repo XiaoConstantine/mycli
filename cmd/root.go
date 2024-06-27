@@ -46,7 +46,7 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 		// })
 		// rootCmd.SetFlagErrorFunc(rootFlagErrorFunc)
 	}
-	if cmd, err := rootCmd.ExecuteContextC(ctx); err != nil {
+	if _, err := rootCmd.ExecuteContextC(ctx); err != nil {
 
 	}
 	return rootCmd, nil
