@@ -13,10 +13,11 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 	cs := iostream.ColorScheme()
 
 	cmd := &cobra.Command{
-		Use:   "install",
+		Use:   "install homebrew",
 		Short: cs.GreenBold("Install homebrew, require admin privileges, make sure enable this via privileges app"),
 		// Long:   actionsExplainer(cs),
-		Hidden: true,
+		Hidden:        true,
+		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			currentUser, _ := getCurrentUser()
 

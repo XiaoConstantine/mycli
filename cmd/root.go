@@ -21,8 +21,6 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 		Use:   cs.GreenBold("mycli"),
 		Short: "Bootstrap my machine",
 		Long:  `Internal CLI help bootstrap my machine.`,
-		// Uncomment the following line if your bare application
-		// has an action associated with it:
 	}
 	rootCmd.AddGroup(
 		&cobra.Group{
@@ -30,6 +28,8 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 			Title: "Install commands",
 		})
 	rootCmd.AddCommand(install.NewCmdHomeBrew(iostream))
+	rootCmd.AddCommand(install.NewCmdXcode(iostream))
+
 	rootCmd.PersistentFlags().Bool("help", false, "Show help for command")
 	if os.Getenv("GH_COBRA") == "" {
 		rootCmd.SilenceErrors = true
