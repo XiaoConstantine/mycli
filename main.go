@@ -9,7 +9,7 @@ import (
 	"os"
 
 	"mycli/cmd"
-	"mycli/iostreams"
+	"mycli/pkg/iostreams"
 )
 
 type exitCode int

@@ -3,13 +3,18 @@ module mycli
 go 1.21.7
 
 require (
+	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/briandowns/spinner v1.23.1
 	github.com/cli/safeexec v1.0.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/muesli/termenv v0.15.2
 )
 
-require github.com/fatih/color v1.17.0 // indirect
+require (
+	github.com/fatih/color v1.17.0 // indirect
+	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
+	golang.org/x/text v0.4.0 // indirect
+)
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect

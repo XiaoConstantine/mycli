@@ -4,8 +4,10 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-	"mycli/iostreams"
+	"context"
+	"mycli/pkg/commands/install"
+	"mycli/pkg/iostreams"
+
 	"os"
 
 	"github.com/spf13/cobra"
@@ -13,31 +15,21 @@ import (
 
 func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 	cs := iostream.ColorScheme()
+	ctx := context.Background()
 
 	rootCmd := &cobra.Command{
-		Use:   "mycli",
-		Short: "A brief description of your application",
-		Long: `A longer description that spans multiple lines and likely contains
-	examples and usage of using your application. For example:
-
-	Cobra is a CLI library for Go that empowers applications.
-	This application is a tool to generate the needed files
-	to quickly create a Cobra application.`,
+		Use:   cs.GreenBold("mycli"),
+		Short: "Bootstrap my machine",
+		Long:  `Internal CLI help bootstrap my machine.`,
 		// Uncomment the following line if your bare application
 		// has an action associated with it:
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Fprintf(iostream.Out, "\n")
-
-			fmt.Fprintf(iostream.Out, cs.GreenBold(cmd.Use))
-			fmt.Fprintf(iostream.Out, "\n")
-			fmt.Fprintf(iostream.Out, cs.Blue(cmd.Short))
-			fmt.Fprintf(iostream.Out, "\n")
-
-			fmt.Fprintf(iostream.Out, cs.Yellow(cmd.Long))
-			fmt.Fprintf(iostream.Out, "\n")
-
-		},
 	}
+	rootCmd.AddGroup(
+		&cobra.Group{
+			ID:    "install",
+			Title: "Install commands",
+		})
+	rootCmd.AddCommand(install.NewCmdHomeBrew(iostream))
 	rootCmd.PersistentFlags().Bool("help", false, "Show help for command")
 	if os.Getenv("GH_COBRA") == "" {
 		rootCmd.SilenceErrors = true
@@ -54,6 +46,8 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 		// })
 		// rootCmd.SetFlagErrorFunc(rootFlagErrorFunc)
 	}
+	if cmd, err := rootCmd.ExecuteContextC(ctx); err != nil {
 
+	}
 	return rootCmd, nil
 }
