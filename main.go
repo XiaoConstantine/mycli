@@ -38,9 +38,9 @@ func mainRun() exitCode {
 		fmt.Fprint(stderr, "failed to create root command: %s\n", err)
 		return exitError
 	}
-	if command, err := rootCmd.ExecuteContextC(ctx); err != nil {
+	if _, err := rootCmd.ExecuteContextC(ctx); err != nil {
 		// printError(stderr, err, cmd, hasDebug)
-		fmt.Fprint(stderr, "Error %s", err, command)
+		// fmt.Fprint(stderr, "Error %s", err, command)
 
 	}
 	return exitOK

@@ -12,6 +12,8 @@ import (
 )
 
 func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
+	cs := iostream.ColorScheme()
+
 	rootCmd := &cobra.Command{
 		Use:   "mycli",
 		Short: "A brief description of your application",
@@ -24,7 +26,16 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 		// Uncomment the following line if your bare application
 		// has an action associated with it:
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(cmd, args)
+			fmt.Fprintf(iostream.Out, "\n")
+
+			fmt.Fprintf(iostream.Out, cs.GreenBold(cmd.Use))
+			fmt.Fprintf(iostream.Out, "\n")
+			fmt.Fprintf(iostream.Out, cs.Blue(cmd.Short))
+			fmt.Fprintf(iostream.Out, "\n")
+
+			fmt.Fprintf(iostream.Out, cs.Yellow(cmd.Long))
+			fmt.Fprintf(iostream.Out, "\n")
+
 		},
 	}
 	rootCmd.PersistentFlags().Bool("help", false, "Show help for command")
