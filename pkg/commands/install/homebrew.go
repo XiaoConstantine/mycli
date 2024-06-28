@@ -9,6 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewCmdHomeBrew creates a new cobra.Command that installs Homebrew on the system.
+// It checks if the current user is an administrator, and if so, runs the Homebrew
+// installation script using the current user's credentials. If the current user
+// is not an administrator, it prints an error message and exits.
 func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 	cs := iostream.ColorScheme()
 

@@ -9,6 +9,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewCmdXcode creates a new cobra.Command that installs Xcode on the user's system.
+// The command runs the "xcode-select --install" command, which prompts the user to install Xcode.
+// The command output and errors are forwarded to the user's terminal.
 func NewCmdXcode(iostream *iostreams.IOStreams) *cobra.Command {
 	cs := iostream.ColorScheme()
 
