@@ -35,12 +35,12 @@ func mainRun() exitCode {
 	rootCmd, err := cmd.NewRootCmd(iostream)
 
 	if err != nil {
-		fmt.Fprint(stderr, "failed to create root command: %s\n", err)
+		fmt.Fprintf(stderr, "failed to create root command: %s\n", err)
 		return exitError
 	}
-	if _, err := rootCmd.ExecuteContextC(ctx); err != nil {
+	if command, err := rootCmd.ExecuteContextC(ctx); err != nil {
 		// printError(stderr, err, cmd, hasDebug)
-		// fmt.Fprint(stderr, "Error %s", err, command)
+		fmt.Fprintf(stderr, "Error %v", command)
 
 	}
 	return exitOK
