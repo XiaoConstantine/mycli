@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"mycli/pkg/commands/install"
 	"mycli/pkg/iostreams"
 
@@ -18,9 +19,11 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 	ctx := context.Background()
 
 	rootCmd := &cobra.Command{
-		Use:   cs.GreenBold("mycli"),
-		Short: "Bootstrap my machine",
-		Long:  `Internal CLI help bootstrap my machine.`,
+		Use:           cs.GreenBold("mycli"),
+		Short:         "Bootstrap my machine",
+		Long:          `Internal CLI help bootstrap my machine.`,
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
 	rootCmd.AddGroup(
 		&cobra.Group{
@@ -47,7 +50,7 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 		// rootCmd.SetFlagErrorFunc(rootFlagErrorFunc)
 	}
 	if _, err := rootCmd.ExecuteContextC(ctx); err != nil {
-
+		fmt.Fprintf(iostream.ErrOut, "Failed to execute root command: %v\n", err)
 	}
 	return rootCmd, nil
 }
