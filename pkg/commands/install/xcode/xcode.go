@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 // NewCmdXcode creates a new cobra.Command that installs Xcode on the user's system.
@@ -26,12 +27,13 @@ func NewCmdXcode(iostream *iostreams.IOStreams) *cobra.Command {
 		},
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			span, ctx := tracer.StartSpanFromContext(cmd.Context(), "installhomebrew")
+			defer span.Finish()
 			if isXcodeAlreadyInstalled() {
 				fmt.Println("Xcode is already installed.")
 				return nil // Early exit if Xcode is already installed
 			}
-			fmt.Fprintf(iostream.Out, cs.Green("Installing xcode with su current user, enter your password when prompt\n"))
-			installCmd := exec.Command("xcode-select", "--install")
+			installCmd := exec.CommandContext(ctx, "xcode-select", "--install")
 
 			installCmd.Stdout = os.Stdout
 			installCmd.Stderr = os.Stderr
@@ -57,5 +59,5 @@ func isXcodeAlreadyInstalled() bool {
 		return false // xcode-select command failed, likely Xcode not installed
 	}
 	// Check output for a known path component, like "/Applications/Xcode.app"
-	return strings.Contains(string(output), "/Applications/Xcode.app")
+	return strings.Contains(string(output), "/Applications/Xcode.app") || strings.Contains(string(output), "CommandLineTools")
 }

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 // NewCmdHomeBrew creates a new cobra.Command that installs Homebrew on the system.
@@ -33,14 +34,18 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 				return nil
 			}
 			currentUser, _ := utils.GetCurrentUser()
+			span, ctx := tracer.StartSpanFromContext(cmd.Context(), "installhomebrew")
+			defer span.Finish()
 
 			if !utils.IsAdmin(currentUser) {
 				fmt.Println(cs.Red("You need to be an administrator to install Homebrew. Please run this command from an admin account."))
+				span.SetTag("error", true)
+				span.Finish(tracer.WithError(os.ErrPermission))
 				os.Exit(1)
 			}
 
 			fmt.Fprintf(iostream.Out, cs.Green("Installing homebrew with su current user, enter your password when prompt\n"))
-			installCmd := exec.Command("su", currentUser.Username, "-c", `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)
+			installCmd := exec.CommandContext(ctx, "su", currentUser.Username, "-c", `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)
 
 			installCmd.Stdout = os.Stdout
 			installCmd.Stderr = os.Stderr
@@ -49,6 +54,8 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 			err := installCmd.Run()
 			if err != nil {
 				fmt.Printf("Failed to install Homebrew: %v\n", err)
+				span.SetTag("error", true)
+				span.Finish(tracer.WithError(err))
 				return err
 			}
 			return nil

@@ -15,6 +15,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/spf13/cobra"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 type exitCode int
@@ -70,6 +71,15 @@ func Run() exitCode {
 	stderr := iostream.ErrOut
 	ctx := context.Background()
 	rootCmd, err := NewRootCmd(iostream)
+
+	tracer.Start(
+		tracer.WithService("mycli"),
+		tracer.WithEnv("development"),
+		tracer.WithServiceVersion("1.0.0"),
+		tracer.WithDebugMode(true),
+		tracer.WithAgentAddr("localhost:8126"),
+	)
+	defer tracer.Stop()
 
 	if err != nil {
 		fmt.Fprintf(stderr, "failed to create root command: %s\n", err)
