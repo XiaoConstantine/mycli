@@ -21,7 +21,9 @@ func NewCmdXcode(iostream *iostreams.IOStreams) *cobra.Command {
 		Short: cs.GreenBold("Install xcode"),
 		// Long:   actionsExplainer(cs),
 		Hidden: true,
-		//GroupID:       "install",
+		Annotations: map[string]string{
+			"group": "install",
+		},
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if isXcodeAlreadyInstalled() {

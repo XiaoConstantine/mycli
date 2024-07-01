@@ -22,9 +22,11 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 		Use:   "install homebrew",
 		Short: cs.GreenBold("Install homebrew, require admin privileges, make sure enable this via privileges app"),
 		// Long:   actionsExplainer(cs),
-		//GroupID:       "install",
 		Hidden:        true,
 		SilenceErrors: true,
+		Annotations: map[string]string{
+			"group": "install",
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if IsHomebrewInstalled() {
 				fmt.Println("Homebrew is installed.")

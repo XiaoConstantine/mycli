@@ -16,6 +16,9 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 		Use:   "install",
 		Short: "Install software",
 		Long:  `All software installation commands.`,
+		Annotations: map[string]string{
+			"group": "install",
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 { // No specific subcommand was provided
 				fmt.Fprintln(iostream.Out, cs.GreenBold("Running all installation subcommands..."))
