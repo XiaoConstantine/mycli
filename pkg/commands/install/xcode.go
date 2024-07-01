@@ -5,6 +5,7 @@ import (
 	"mycli/pkg/iostreams"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -20,9 +21,13 @@ func NewCmdXcode(iostream *iostreams.IOStreams) *cobra.Command {
 		Short: cs.GreenBold("Install xcode"),
 		// Long:   actionsExplainer(cs),
 		Hidden:        true,
+		GroupID:       "install",
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-
+			if isXcodeAlreadyInstalled() {
+				fmt.Println("Xcode is already installed.")
+				return nil // Early exit if Xcode is already installed
+			}
 			fmt.Fprintf(iostream.Out, cs.Green("Installing xcode with su current user, enter your password when prompt\n"))
 			installCmd := exec.Command("xcode-select", "--install")
 
@@ -40,4 +45,15 @@ func NewCmdXcode(iostream *iostreams.IOStreams) *cobra.Command {
 	}
 
 	return cmd
+}
+
+// isXcodeAlreadyInstalled checks if Xcode is already installed by looking for its directory.
+func isXcodeAlreadyInstalled() bool {
+	cmd := exec.Command("xcode-select", "-p")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return false // xcode-select command failed, likely Xcode not installed
+	}
+	// Check output for a known path component, like "/Applications/Xcode.app"
+	return strings.Contains(string(output), "/Applications/Xcode.app")
 }

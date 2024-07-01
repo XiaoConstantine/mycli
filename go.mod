@@ -8,15 +8,14 @@ require (
 	github.com/cli/safeexec v1.0.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/muesli/termenv v0.15.2
+	github.com/stretchr/testify v1.9.0
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.17.0 // indirect
-	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

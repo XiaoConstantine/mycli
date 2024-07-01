@@ -1,4 +1,4 @@
-package install
+package utils
 
 import (
 	"fmt"
@@ -7,14 +7,14 @@ import (
 	"strings"
 )
 
-func getCurrentUser() (*user.User, error) {
+func GetCurrentUser() (*user.User, error) {
 	return user.Current()
 }
 
 // isAdmin checks if the given user is a member of the "admin" group.
 // It uses the "groups" command to list the groups the user belongs to,
 // and returns true if the output contains the "admin" group.
-func isAdmin(u *user.User) bool {
+func IsAdmin(u *user.User) bool {
 	cmd := exec.Command("groups", u.Username)
 	output, err := cmd.Output()
 	if err != nil {

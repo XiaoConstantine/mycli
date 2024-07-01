@@ -5,13 +5,26 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"mycli/pkg/commands/install"
 	"mycli/pkg/iostreams"
+	"mycli/pkg/utils"
 
 	"os"
 
+	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/spf13/cobra"
+)
+
+type exitCode int
+
+const (
+	exitOK      exitCode = 0
+	exitError   exitCode = 1
+	exitCancel  exitCode = 2
+	exitAuth    exitCode = 4
+	exitPending exitCode = 8
 )
 
 func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
@@ -53,4 +66,44 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 		fmt.Fprintf(iostream.ErrOut, "Failed to execute root command: %v\n", err)
 	}
 	return rootCmd, nil
+}
+
+func Run() exitCode {
+	iostream := iostreams.System()
+	stderr := iostream.ErrOut
+	ctx := context.Background()
+	rootCmd, err := NewRootCmd(iostream)
+
+	if err != nil {
+		fmt.Fprintf(stderr, "failed to create root command: %s\n", err)
+		return exitError
+	}
+	if command, err := rootCmd.ExecuteContextC(ctx); err != nil {
+		var pagerPipeError *iostreams.ErrClosedPagerPipe
+		var noResultsError utils.NoResultsError
+
+		if err == utils.SilentError {
+			return exitError
+		} else if err == utils.PendingError {
+			return exitPending
+		} else if utils.IsUserCancellation(err) {
+			if errors.Is(err, terminal.InterruptErr) {
+				// ensure the next shell prompt will start on its own line
+				fmt.Fprint(stderr, "\n")
+			}
+			return exitCancel
+		} else if errors.As(err, &pagerPipeError) {
+			// ignore the error raised when piping to a closed pager
+			return exitOK
+		} else if errors.As(err, &noResultsError) {
+			if iostream.IsStdoutTTY() {
+				fmt.Fprintln(stderr, noResultsError.Error())
+			}
+			// no results is not a command failure
+			return exitOK
+		}
+		fmt.Fprintf(stderr, "Error %v", command)
+
+	}
+	return exitOK
 }

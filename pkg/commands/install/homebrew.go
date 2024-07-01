@@ -3,8 +3,10 @@ package install
 import (
 	"fmt"
 	"mycli/pkg/iostreams"
+	"mycli/pkg/utils"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -20,12 +22,17 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 		Use:   "install homebrew",
 		Short: cs.GreenBold("Install homebrew, require admin privileges, make sure enable this via privileges app"),
 		// Long:   actionsExplainer(cs),
+		GroupID:       "install",
 		Hidden:        true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			currentUser, _ := getCurrentUser()
+			if IsHomebrewInstalled() {
+				fmt.Println("Homebrew is installed.")
+				return nil
+			}
+			currentUser, _ := utils.GetCurrentUser()
 
-			if !isAdmin(currentUser) {
+			if !utils.IsAdmin(currentUser) {
 				fmt.Println(cs.Red("You need to be an administrator to install Homebrew. Please run this command from an admin account."))
 				os.Exit(1)
 			}
@@ -47,4 +54,17 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 	}
 
 	return cmd
+}
+
+// IsHomebrewInstalled checks if Homebrew is installed on the system.
+func IsHomebrewInstalled() bool {
+	// The 'which' command searches for the Homebrew executable in the system path.
+	cmd := exec.Command("which", "brew")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return false // 'which' did not find the Homebrew binary, or another error occurred
+	}
+
+	// Check the output. If it contains the path to the brew executable, Homebrew is installed.
+	return strings.Contains(string(output), "/brew")
 }
