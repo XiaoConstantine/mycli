@@ -27,8 +27,8 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 			ID:    "install",
 			Title: "Install commands",
 		})
-	rootCmd.AddCommand(install.NewCmdHomeBrew(iostream))
 	rootCmd.AddCommand(install.NewCmdXcode(iostream))
+	rootCmd.AddCommand(install.NewCmdHomeBrew(iostream))
 
 	rootCmd.PersistentFlags().Bool("help", false, "Show help for command")
 	if os.Getenv("GH_COBRA") == "" {
