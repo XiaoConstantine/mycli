@@ -1,6 +1,7 @@
 package homebrew
 
 import (
+	"context"
 	"fmt"
 	"mycli/pkg/iostreams"
 	"mycli/pkg/utils"
@@ -29,12 +30,12 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 			"group": "install",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if IsHomebrewInstalled() {
+			currentUser, _ := utils.GetCurrentUser()
+			span, ctx := tracer.StartSpanFromContext(cmd.Context(), "installhomebrew")
+			if IsHomebrewInstalled(ctx) {
 				fmt.Println("Homebrew is installed.")
 				return nil
 			}
-			currentUser, _ := utils.GetCurrentUser()
-			span, ctx := tracer.StartSpanFromContext(cmd.Context(), "installhomebrew")
 			defer span.Finish()
 
 			if !utils.IsAdmin(currentUser) {
@@ -66,9 +67,9 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 }
 
 // IsHomebrewInstalled checks if Homebrew is installed on the system.
-func IsHomebrewInstalled() bool {
+func IsHomebrewInstalled(ctx context.Context) bool {
 	// The 'which' command searches for the Homebrew executable in the system path.
-	cmd := exec.Command("which", "brew")
+	cmd := exec.CommandContext(ctx, "which", "brew")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return false // 'which' did not find the Homebrew binary, or another error occurred

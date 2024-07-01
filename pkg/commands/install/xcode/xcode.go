@@ -1,6 +1,7 @@
 package xcode
 
 import (
+	"context"
 	"fmt"
 	"mycli/pkg/iostreams"
 	"os"
@@ -27,9 +28,9 @@ func NewCmdXcode(iostream *iostreams.IOStreams) *cobra.Command {
 		},
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			span, ctx := tracer.StartSpanFromContext(cmd.Context(), "installhomebrew")
+			span, ctx := tracer.StartSpanFromContext(cmd.Context(), "installxcode")
 			defer span.Finish()
-			if isXcodeAlreadyInstalled() {
+			if isXcodeAlreadyInstalled(ctx) {
 				fmt.Println("Xcode is already installed.")
 				return nil // Early exit if Xcode is already installed
 			}
@@ -42,6 +43,8 @@ func NewCmdXcode(iostream *iostreams.IOStreams) *cobra.Command {
 			err := installCmd.Run()
 			if err != nil {
 				// fmt.Printf("Failed to install xcode: %v\n", err)
+				span.SetTag("error", true)
+				span.Finish(tracer.WithError(err))
 				return err
 			}
 			return nil
@@ -52,8 +55,8 @@ func NewCmdXcode(iostream *iostreams.IOStreams) *cobra.Command {
 }
 
 // isXcodeAlreadyInstalled checks if Xcode is already installed by looking for its directory.
-func isXcodeAlreadyInstalled() bool {
-	cmd := exec.Command("xcode-select", "-p")
+func isXcodeAlreadyInstalled(ctx context.Context) bool {
+	cmd := exec.CommandContext(ctx, "xcode-select", "-p")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return false // xcode-select command failed, likely Xcode not installed
