@@ -1,4 +1,4 @@
-package install
+package xcode
 
 import (
 	"fmt"
@@ -20,8 +20,8 @@ func NewCmdXcode(iostream *iostreams.IOStreams) *cobra.Command {
 		Use:   "install xcode",
 		Short: cs.GreenBold("Install xcode"),
 		// Long:   actionsExplainer(cs),
-		Hidden:        true,
-		GroupID:       "install",
+		Hidden: true,
+		//GroupID:       "install",
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if isXcodeAlreadyInstalled() {

@@ -1,4 +1,4 @@
-package install
+package homebrew
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 		Use:   "install homebrew",
 		Short: cs.GreenBold("Install homebrew, require admin privileges, make sure enable this via privileges app"),
 		// Long:   actionsExplainer(cs),
-		GroupID:       "install",
+		//GroupID:       "install",
 		Hidden:        true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {

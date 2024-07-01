@@ -1,4 +1,4 @@
-package install
+package homebrew
 
 import (
 	"mycli/pkg/iostreams"

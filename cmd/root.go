@@ -29,7 +29,6 @@ const (
 
 func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 	cs := iostream.ColorScheme()
-	ctx := context.Background()
 
 	rootCmd := &cobra.Command{
 		Use:           cs.GreenBold("mycli"),
@@ -43,9 +42,10 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 			ID:    "install",
 			Title: "Install commands",
 		})
-	rootCmd.AddCommand(install.NewCmdXcode(iostream))
-	rootCmd.AddCommand(install.NewCmdHomeBrew(iostream))
 
+	installCmd := install.NewInstallCmd(iostream)
+
+	rootCmd.AddCommand(installCmd)
 	rootCmd.PersistentFlags().Bool("help", false, "Show help for command")
 	if os.Getenv("GH_COBRA") == "" {
 		rootCmd.SilenceErrors = true
@@ -61,9 +61,6 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 		// 	return rootUsageFunc(f.IOStreams.ErrOut, c)
 		// })
 		// rootCmd.SetFlagErrorFunc(rootFlagErrorFunc)
-	}
-	if _, err := rootCmd.ExecuteContextC(ctx); err != nil {
-		fmt.Fprintf(iostream.ErrOut, "Failed to execute root command: %v\n", err)
 	}
 	return rootCmd, nil
 }
