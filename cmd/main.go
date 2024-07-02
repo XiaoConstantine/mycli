@@ -4,11 +4,11 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package main
 
 import (
-	"mycli/cmd"
+	"mycli/pkg/commands/root"
 	"os"
 )
 
 func main() {
-	code := cmd.Run()
+	code := root.Run()
 	os.Exit(int(code))
 }
