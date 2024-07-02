@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+Copyright © 2024 Xiao Cui <constantine124@gmail.com>
 */
 package root
 
@@ -10,9 +10,11 @@ import (
 	"mycli/pkg/commands/install"
 	"mycli/pkg/iostreams"
 	"mycli/pkg/utils"
-
 	"os"
+	"path/filepath"
+	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/spf13/cobra"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
@@ -70,16 +72,90 @@ func Run() exitCode {
 	iostream := iostreams.System()
 	stderr := iostream.ErrOut
 	ctx := context.Background()
+
+	utils.PrintWelcomeMessage(iostream)
 	rootCmd, err := NewRootCmd(iostream)
 
 	tracer.Start(
 		tracer.WithService("mycli"),
 		tracer.WithEnv("development"),
 		tracer.WithServiceVersion("1.0.0"),
+		tracer.WithLogStartup(false),
 		tracer.WithDebugMode(false),
 		tracer.WithAgentAddr("localhost:8126"),
 	)
 	defer tracer.Stop()
+
+	// Get all available commands
+	var options []string
+	for _, cmd := range rootCmd.Commands() {
+		options = append(options, cmd.Use)
+	}
+
+	// Prompt user to select a command
+	var selectedOption string
+	prompt := &survey.Select{
+		Message: "Choose a command to run:",
+		Options: options,
+	}
+	survey.AskOne(prompt, &selectedOption)
+
+	// Confirm if user wants to run the install command
+	var confirm bool
+	confirmPrompt := &survey.Confirm{
+		Message: fmt.Sprintf("Do you want to run the '%s' command?", selectedOption),
+	}
+	survey.AskOne(confirmPrompt, &confirm)
+
+	if !confirm {
+		fmt.Println("Operation cancelled by user.")
+		return exitOK
+	}
+
+	var configPath string
+	if selectedOption == "install" {
+		// Prompt for config file path
+		configPrompt := &survey.Input{
+			Message: "Enter the path to the config file:",
+			Default: "config.yaml",
+		}
+		survey.AskOne(configPrompt, &configPath)
+		configPath = os.ExpandEnv(configPath)
+		// Replace ~ with home directory
+		if strings.HasPrefix(configPath, "~") {
+			home, err := os.UserHomeDir()
+			if err == nil {
+				configPath = filepath.Join(home, configPath[1:])
+			}
+		}
+
+		// Get the absolute path
+		absPath, err := filepath.Abs(configPath)
+		if err == nil {
+			configPath = absPath
+		}
+		fmt.Println(configPath)
+		// Validate the file path
+		if _, err := os.Stat(configPath); os.IsNotExist(err) {
+			fmt.Fprintf(stderr, "Error: Config file does not exist at path: %s\n", configPath)
+			return exitError
+		}
+	}
+
+	// Set the args for the root command
+	if selectedOption == "install" {
+		rootCmd.SetArgs([]string{selectedOption, "--config", configPath})
+		var selectedCmd *cobra.Command
+		for _, cmd := range rootCmd.Commands() {
+			if cmd.Use == selectedOption {
+				selectedCmd = cmd
+				break
+			}
+			selectedCmd.SetArgs([]string{selectedOption, "--config", configPath})
+		}
+	} else {
+		rootCmd.SetArgs([]string{selectedOption})
+	}
 
 	if err != nil {
 		fmt.Fprintf(stderr, "failed to create root command: %s\n", err)

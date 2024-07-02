@@ -2,10 +2,13 @@ package utils
 
 import (
 	"fmt"
+	"math/rand"
+	"mycli/pkg/iostreams"
 	"os"
 	"os/exec"
 	"os/user"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -48,4 +51,52 @@ func LoadToolsConfig(filename string) (*ToolConfig, error) {
 		return nil, err
 	}
 	return &config, nil
+}
+
+func getRandomASCIILogo() string {
+	logos := []string{
+		`
+    __  ___      ________    ____
+   /  |/  /_  __/ ____/ /   /  _/
+  / /|_/ / / / / /   / /    / /
+ / /  / / /_/ / /___/ /____/ /
+/_/  /_/\__, /\____/_____/___/
+       /____/
+`,
+		`
+ ________            _________    ___
+|\\   __  \\         |\\___   ___\\ |\\  \\
+\\ \\  \\|\\  \\  ____  \\|___ \\  \\_| \\ \\  \\
+ \\ \\   __  \\|\\  __\\     \\ \\  \\   \\ \\  \\
+  \\ \\  \\ \\  \\ \\ \\__/__    \\ \\  \\   \\ \\  \\____
+   \\ \\__\\ \\__\\ \\______\\    \\ \\__\\   \\ \\_______\\
+    \\|__|\\|__|\\|______|     \\|__|    \\|_______|
+`,
+	}
+	return logos[rand.Intn(len(logos))]
+}
+
+func PrintWelcomeMessage(iostream *iostreams.IOStreams) {
+	cs := iostream.ColorScheme()
+	out := iostream.Out
+
+	asciiLogo := getRandomASCIILogo()
+
+	fmt.Fprintln(out, "")
+	fmt.Fprintln(out, cs.Blue("Welcome to MyCLI!"))
+	fmt.Fprintln(out, cs.Blue(asciiLogo))
+	fmt.Fprintln(out, cs.Green("Your personal machine bootstrapping tool"))
+	fmt.Fprintln(out, "")
+	fmt.Fprintf(out, "Version: %s\n", cs.Yellow("1.0.0"))
+	fmt.Fprintf(out, "Current time: %s\n", cs.Yellow(time.Now().Format("2006-01-02 15:04:05")))
+	fmt.Fprintln(out, "")
+	fmt.Fprintln(out, "Available commands:")
+	fmt.Fprintln(out, "  - install: Install software tools")
+	fmt.Fprintln(out, "  - config: Configure your system")
+	fmt.Fprintln(out, "  - update: Update MyCLI")
+	fmt.Fprintln(out, "")
+	fmt.Fprintln(out, cs.Yellow("Tip: Use 'mycli --help' to see all available commands and options."))
+	fmt.Fprintln(out, "")
+	fmt.Fprintln(out, "Let's get started with setting up your machine...")
+	fmt.Fprintln(out, "")
 }
