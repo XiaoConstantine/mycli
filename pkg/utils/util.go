@@ -27,18 +27,23 @@ func IsAdmin(u *user.User) bool {
 	return strings.Contains(string(output), "admin")
 }
 
-type ToolsConfig struct {
-	Tools []string `yaml:"tools"`
-	Casks []string `yaml:"casks"`
+type ToolConfig struct {
+	Tools []Tool `yaml:"tools"`
+}
+
+type Tool struct {
+	Name           string `yaml:"name"`
+	Method         string `yaml:"method,omitempty"` // Optional, for specifying 'cask' or other Homebrew methods
+	InstallCommand string `yaml:"install_command,omitempty"`
 }
 
 // LoadToolsConfig loads tool configuration from a YAML file.
-func LoadToolsConfig(filename string) (*ToolsConfig, error) {
+func LoadToolsConfig(filename string) (*ToolConfig, error) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	var config ToolsConfig
+	var config ToolConfig
 	if err := yaml.Unmarshal(data, &config); err != nil {
 		return nil, err
 	}

@@ -1,4 +1,6 @@
 tools:
-  - neovim
-casks:
-  - alacritty
+  - name: "neovim"    # Will use Homebrew by default
+  - name: "alacritty"
+    method: "cask"    # Specifies this is a Homebrew cask
+  - name: "uv"
+    install_command: "curl -LsSf https://astral.sh/uv/install.sh | sh"

@@ -15,6 +15,7 @@ import (
 func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	cs := iostream.ColorScheme()
 	var configFile string
+	var force bool
 
 	cmd := &cobra.Command{
 		Use:   "tools",
@@ -32,38 +33,46 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 				fmt.Fprintf(iostream.ErrOut, cs.Red("Error loading configuration: %v\n"), err)
 				return err
 			}
-			return InstallToolsFromConfig(iostream, config, ctx)
+			return InstallToolsFromConfig(iostream, config, ctx, force)
 		},
 	}
 	cmd.Flags().StringVarP(&configFile, "config", "c", "config.yaml", "Path to the configuration file")
+	cmd.Flags().BoolVarP(&force, "force", "f", false, "Force reinstall of casks")
 	return cmd
 }
 
-func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolsConfig, ctx context.Context) error {
+func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolConfig, ctx context.Context, force bool) error {
+	cs := iostream.ColorScheme()
 	for _, tool := range config.Tools {
-		fmt.Printf("Installing tool %s...\n", tool)
-		if err := runBrewInstall(iostream, tool, false, ctx); err != nil {
-			return err
-		}
-	}
-	for _, cask := range config.Casks {
-		fmt.Printf("Installing cask %s...\n", cask)
-		if err := runBrewInstall(iostream, cask, true, ctx); err != nil {
-			return err
+		fmt.Fprintf(iostream.Out, cs.Green("Installing tool %s...\n"), tool)
+		if tool.InstallCommand != "" {
+			fmt.Fprintf(iostream.Out, "Installing %s using custom command...\n", tool.Name)
+			if err := executeCommand(tool.InstallCommand, ctx); err != nil {
+				fmt.Fprintf(iostream.ErrOut, cs.Red("Failed to install %s: %v\n"), tool.Name, err)
+				return err
+			}
+		} else {
+			// Default to Homebrew installation
+			command := "brew install"
+			if tool.Method == "cask" {
+				command += " --cask"
+			}
+			if force {
+				command += " --force"
+			}
+			fmt.Printf("Installing %s using Homebrew with %s...\n", tool.Name, command)
+			if err := executeCommand(fmt.Sprintf("%s %s", command, tool.Name), ctx); err != nil {
+				fmt.Fprintf(iostream.ErrOut, cs.Red("Failed to install %s: %v\n"), tool.Name, err)
+				return err
+			}
 		}
 	}
 	fmt.Println("All requested tools and casks have been installed successfully.")
 	return nil
 }
 
-// runBrewInstall runs the brew install command for a given tool or cask.
-func runBrewInstall(iostream *iostreams.IOStreams, name string, isCask bool, ctx context.Context) error {
-	var cmd *exec.Cmd
-	if isCask {
-		cmd = exec.CommandContext(ctx, "brew", "install", "--cask", name)
-	} else {
-		cmd = exec.CommandContext(ctx, "brew", "install", name)
-	}
+func executeCommand(command string, ctx context.Context) error {
+	cmd := exec.CommandContext(ctx, "sh", "-c", command)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
