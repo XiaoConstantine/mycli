@@ -10,6 +10,7 @@ require (
 	github.com/muesli/termenv v0.15.2
 	github.com/stretchr/testify v1.9.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.65.1
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (

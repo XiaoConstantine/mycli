@@ -76,7 +76,7 @@ func Run() exitCode {
 		tracer.WithService("mycli"),
 		tracer.WithEnv("development"),
 		tracer.WithServiceVersion("1.0.0"),
-		tracer.WithDebugMode(true),
+		tracer.WithDebugMode(false),
 		tracer.WithAgentAddr("localhost:8126"),
 	)
 	defer tracer.Stop()

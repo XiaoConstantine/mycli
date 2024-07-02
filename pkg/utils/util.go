@@ -2,9 +2,12 @@ package utils
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"os/user"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 )
 
 func GetCurrentUser() (*user.User, error) {
@@ -22,4 +25,22 @@ func IsAdmin(u *user.User) bool {
 		return false
 	}
 	return strings.Contains(string(output), "admin")
+}
+
+type ToolsConfig struct {
+	Tools []string `yaml:"tools"`
+	Casks []string `yaml:"casks"`
+}
+
+// LoadToolsConfig loads tool configuration from a YAML file.
+func LoadToolsConfig(filename string) (*ToolsConfig, error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	var config ToolsConfig
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return nil, err
+	}
+	return &config, nil
 }

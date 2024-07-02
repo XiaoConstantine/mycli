@@ -40,6 +40,6 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 
 	installCmd.AddCommand(xcode.NewCmdXcode(iostream))
 	installCmd.AddCommand(homebrew.NewCmdHomeBrew(iostream))
-
+	installCmd.AddCommand(homebrew.NewInstallCmd(iostream))
 	return installCmd
 }
