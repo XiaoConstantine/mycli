@@ -21,7 +21,7 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 	cs := iostream.ColorScheme()
 
 	cmd := &cobra.Command{
-		Use:   "install homebrew",
+		Use:   "homebrew",
 		Short: cs.GreenBold("Install homebrew, require admin privileges, make sure enable this via privileges app"),
 		// Long:   actionsExplainer(cs),
 		Hidden:        true,
@@ -31,18 +31,20 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			currentUser, _ := utils.GetCurrentUser()
-			span, ctx := tracer.StartSpanFromContext(cmd.Context(), "installhomebrew")
+			span, ctx := tracer.StartSpanFromContext(cmd.Context(), "install_homebrew")
+			defer span.Finish()
 			if IsHomebrewInstalled(ctx) {
 				fmt.Println("Homebrew is installed.")
+				span.SetTag("status", "success")
+				span.Finish()
 				return nil
 			}
-			defer span.Finish()
 
 			if !utils.IsAdmin(currentUser) {
 				fmt.Println(cs.Red("You need to be an administrator to install Homebrew. Please run this command from an admin account."))
 				span.SetTag("error", true)
 				span.Finish(tracer.WithError(os.ErrPermission))
-				os.Exit(1)
+				return os.ErrPermission
 			}
 
 			fmt.Fprintf(iostream.Out, cs.Green("Installing homebrew with su current user, enter your password when prompt\n"))
@@ -59,6 +61,7 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 				span.Finish(tracer.WithError(err))
 				return err
 			}
+			span.SetTag("status", "success")
 			return nil
 		},
 	}

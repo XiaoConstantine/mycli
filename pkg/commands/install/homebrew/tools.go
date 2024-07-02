@@ -12,7 +12,7 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
-func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
+func NewInstallToolsCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	cs := iostream.ColorScheme()
 	var configFile string
 	var force bool
@@ -25,7 +25,7 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 			"group": "install",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			span, ctx := tracer.StartSpanFromContext(cmd.Context(), "installhomebrew")
+			span, ctx := tracer.StartSpanFromContext(cmd.Context(), "install_tools")
 			defer span.Finish()
 
 			config, err := utils.LoadToolsConfig(configFile)
@@ -43,12 +43,18 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 
 func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolConfig, ctx context.Context, force bool) error {
 	cs := iostream.ColorScheme()
+	parentSpan, ctx := tracer.StartSpanFromContext(ctx, "install_tools")
+	defer parentSpan.Finish()
 	for _, tool := range config.Tools {
+		toolSpan, toolCtx := tracer.StartSpanFromContext(ctx, fmt.Sprintf("install_%s", tool.Name))
+
 		fmt.Fprintf(iostream.Out, cs.Green("Installing tool %s...\n"), tool)
 		if tool.InstallCommand != "" {
-			fmt.Fprintf(iostream.Out, "Installing %s using custom command...\n", tool.Name)
-			if err := executeCommand(tool.InstallCommand, ctx); err != nil {
+			fmt.Fprintf(iostream.Out, "Installing %s using custom command %s...\n", tool.Name, tool.InstallCommand)
+			if err := executeCommand(tool.InstallCommand, toolCtx); err != nil {
 				fmt.Fprintf(iostream.ErrOut, cs.Red("Failed to install %s: %v\n"), tool.Name, err)
+				toolSpan.SetTag("status", "failed")
+				toolSpan.SetTag("error", err)
 				return err
 			}
 		} else {
@@ -61,13 +67,17 @@ func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolCon
 				command += " --force"
 			}
 			fmt.Printf("Installing %s using Homebrew with %s...\n", tool.Name, command)
-			if err := executeCommand(fmt.Sprintf("%s %s", command, tool.Name), ctx); err != nil {
+			if err := executeCommand(fmt.Sprintf("%s %s", command, tool.Name), toolCtx); err != nil {
+				toolSpan.SetTag("status", "failed")
+				toolSpan.SetTag("error", err)
 				fmt.Fprintf(iostream.ErrOut, cs.Red("Failed to install %s: %v\n"), tool.Name, err)
 				return err
 			}
 		}
+		toolSpan.SetTag("status", "success")
+		toolSpan.Finish()
 	}
-	fmt.Println("All requested tools and casks have been installed successfully.")
+	fmt.Fprintln(iostream.Out, cs.GreenBold("All requested tools and casks have been installed successfully."))
 	return nil
 }
 

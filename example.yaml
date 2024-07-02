@@ -1,6 +1,16 @@
 tools:
-  - name: "neovim"    # Will use Homebrew by default
+  - name: "zsh"
+  - name: "kubectl"
+  - name: "derailed/k9s/k9s"
+  - name: "docker-compose"
+  - name: "neovim" # Will use Homebrew by default
   - name: "alacritty"
-    method: "cask"    # Specifies this is a Homebrew cask
+    method: "cask" # Specifies this is a Homebrew cask
+  - name: "docker"
+    method: "cask"
+  - name: "google-cloud-sdk"
+    method: "cask"
+  - name: "gcloud util"
+    install_command: "gcloud components install beta pubsub-emulator bq cloud_sql_proxy gke-gcloud-auth-plugin"
   - name: "uv"
     install_command: "curl -LsSf https://astral.sh/uv/install.sh | sh"

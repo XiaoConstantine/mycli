@@ -19,7 +19,7 @@ func NewCmdXcode(iostream *iostreams.IOStreams) *cobra.Command {
 	cs := iostream.ColorScheme()
 
 	cmd := &cobra.Command{
-		Use:   "install xcode",
+		Use:   "xcode",
 		Short: cs.GreenBold("Install xcode"),
 		// Long:   actionsExplainer(cs),
 		Hidden: true,
@@ -28,9 +28,11 @@ func NewCmdXcode(iostream *iostreams.IOStreams) *cobra.Command {
 		},
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			span, ctx := tracer.StartSpanFromContext(cmd.Context(), "installxcode")
+			span, ctx := tracer.StartSpanFromContext(cmd.Context(), "install_xcode")
 			defer span.Finish()
 			if isXcodeAlreadyInstalled(ctx) {
+				span.SetTag("status", "success")
+				span.Finish()
 				fmt.Println("Xcode is already installed.")
 				return nil // Early exit if Xcode is already installed
 			}
@@ -47,6 +49,7 @@ func NewCmdXcode(iostream *iostreams.IOStreams) *cobra.Command {
 				span.Finish(tracer.WithError(err))
 				return err
 			}
+			span.SetTag("status", "success")
 			return nil
 		},
 	}
