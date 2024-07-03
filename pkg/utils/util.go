@@ -71,8 +71,9 @@ func GetOsInfo() map[string]string {
 
 	sysname := unix.ByteSliceToString(uts.Sysname[:])
 	release := unix.ByteSliceToString(uts.Release[:])
+	user, _ := user.Current()
 
-	return map[string]string{"sysname": sysname, "release": release}
+	return map[string]string{"sysname": sysname, "release": release, "user": user.Username}
 }
 
 func getRandomASCIILogo() string {
