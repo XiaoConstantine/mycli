@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v2"
 )
 
@@ -60,6 +61,18 @@ func GetSubcommandNames(cmd *cobra.Command) []string {
 		names = append(names, subcmd.Use)
 	}
 	return names
+}
+
+func GetOsInfo() map[string]string {
+	var uts unix.Utsname
+	if err := unix.Uname(&uts); err != nil {
+		panic(err)
+	}
+
+	sysname := unix.ByteSliceToString(uts.Sysname[:])
+	release := unix.ByteSliceToString(uts.Release[:])
+
+	return map[string]string{"sysname": sysname, "release": release}
 }
 
 func getRandomASCIILogo() string {

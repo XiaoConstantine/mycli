@@ -33,7 +33,7 @@ func NewInstallToolsCmd(iostream *iostreams.IOStreams) *cobra.Command {
 			config, err := utils.LoadToolsConfig(configFile)
 			if err != nil {
 				fmt.Fprintf(iostream.ErrOut, cs.Red("Error loading configuration: %v\n"), err)
-				return err
+				return utils.ConfigNotFoundError
 			}
 			return InstallToolsFromConfig(iostream, config, ctx, force)
 		},

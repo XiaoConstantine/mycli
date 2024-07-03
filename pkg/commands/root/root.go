@@ -62,6 +62,7 @@ func Run() exitCode {
 	utils.PrintWelcomeMessage(iostream)
 	rootCmd, err := NewRootCmd(iostream)
 
+	os_info := utils.GetOsInfo()
 	// todo: make optional for tracing
 	tracer.Start(
 		tracer.WithService("mycli"),
@@ -71,8 +72,12 @@ func Run() exitCode {
 		tracer.WithDebugMode(false),
 		tracer.WithLogger(NoOpLogger{}),
 		tracer.WithAgentAddr("localhost:8126"),
+		tracer.WithGlobalTag("system", os_info),
 	)
 	defer tracer.Stop()
+
+	span, ctx := tracer.StartSpanFromContext(ctx, "root")
+	defer span.Finish()
 
 	// Get all available commands
 	var options []string
@@ -110,7 +115,7 @@ func Run() exitCode {
 		fmt.Fprintf(stderr, "failed to create root command: %s\n", err)
 		return exitError
 	}
-	if command, err := rootCmd.ExecuteContextC(ctx); err != nil {
+	if _, err := rootCmd.ExecuteContextC(ctx); err != nil {
 		var pagerPipeError *iostreams.ErrClosedPagerPipe
 		var noResultsError utils.NoResultsError
 
@@ -133,9 +138,10 @@ func Run() exitCode {
 			}
 			// no results is not a command failure
 			return exitOK
+		} else if err == utils.ConfigNotFoundError {
+			fmt.Fprintln(stderr, iostream.ColorScheme().Red("Config file is invalid for tools install, skipping..."))
+			return exitOK
 		}
-		fmt.Fprintf(stderr, "Error %v", command)
-
 	}
 	return exitOK
 }

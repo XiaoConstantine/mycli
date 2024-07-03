@@ -40,6 +40,8 @@ var CancelError = errors.New("CancelError")
 // PendingError signals nothing failed but something is pending
 var PendingError = errors.New("PendingError")
 
+var ConfigNotFoundError = errors.New("Config file not found")
+
 func IsUserCancellation(err error) bool {
 	return errors.Is(err, CancelError) || errors.Is(err, terminal.InterruptErr)
 }
