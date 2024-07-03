@@ -1,6 +1,6 @@
 module mycli
 
-go 1.21.7
+go 1.21
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
