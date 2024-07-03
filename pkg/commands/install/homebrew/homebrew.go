@@ -47,7 +47,7 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 				return os.ErrPermission
 			}
 
-			fmt.Fprintf(iostream.Out, cs.Green("Installing homebrew with su current user, enter your password when prompt\n"))
+			fmt.Fprint(iostream.Out, cs.Green("Installing homebrew with su current user, enter your password when prompt\n"))
 			installCmd := exec.CommandContext(ctx, "su", currentUser.Username, "-c", `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)
 
 			installCmd.Stdout = os.Stdout

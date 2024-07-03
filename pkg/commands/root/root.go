@@ -86,14 +86,20 @@ func Run() exitCode {
 		Message: "Choose a command to run:",
 		Options: options,
 	}
-	survey.AskOne(prompt, &selectedOption)
+	if err := survey.AskOne(prompt, &selectedOption); err != nil {
+		fmt.Fprintf(stderr, "failed to select a command: %s\n", err)
+		return exitError
+	}
 
 	// Confirm if user wants to run the install command
 	var confirm bool
 	confirmPrompt := &survey.Confirm{
 		Message: fmt.Sprintf("Do you want to run the '%s' command?", selectedOption),
 	}
-	survey.AskOne(confirmPrompt, &confirm)
+	if err := survey.AskOne(confirmPrompt, &confirm); err != nil {
+		fmt.Fprintf(stderr, "failed to confirm the command: %s\n", err)
+		return exitError
+	}
 
 	if !confirm {
 		fmt.Println("Operation cancelled by user.")
