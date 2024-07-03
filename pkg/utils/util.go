@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
 
@@ -51,6 +52,14 @@ func LoadToolsConfig(filename string) (*ToolConfig, error) {
 		return nil, err
 	}
 	return &config, nil
+}
+
+func GetSubcommandNames(cmd *cobra.Command) []string {
+	var names []string
+	for _, subcmd := range cmd.Commands() {
+		names = append(names, subcmd.Use)
+	}
+	return names
 }
 
 func getRandomASCIILogo() string {

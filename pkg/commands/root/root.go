@@ -11,8 +11,6 @@ import (
 	"mycli/pkg/iostreams"
 	"mycli/pkg/utils"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
@@ -111,52 +109,7 @@ func Run() exitCode {
 		fmt.Println("Operation cancelled by user.")
 		return exitOK
 	}
-
-	var configPath string
-	if selectedOption == "install" {
-		// Prompt for config file path
-		configPrompt := &survey.Input{
-			Message: "Enter the path to the config file:",
-			Default: "config.yaml",
-		}
-		survey.AskOne(configPrompt, &configPath)
-		configPath = os.ExpandEnv(configPath)
-		// Replace ~ with home directory
-		if strings.HasPrefix(configPath, "~") {
-			home, err := os.UserHomeDir()
-			if err == nil {
-				configPath = filepath.Join(home, configPath[1:])
-			}
-		}
-
-		// Get the absolute path
-		absPath, err := filepath.Abs(configPath)
-		if err == nil {
-			configPath = absPath
-		}
-		fmt.Println(configPath)
-		// Validate the file path
-		if _, err := os.Stat(configPath); os.IsNotExist(err) {
-			fmt.Fprintf(stderr, "Error: Config file does not exist at path: %s\n", configPath)
-			return exitError
-		}
-	}
-
-	// Set the args for the root command
-	if selectedOption == "install" {
-		rootCmd.SetArgs([]string{selectedOption, "--config", configPath})
-		var selectedCmd *cobra.Command
-		for _, cmd := range rootCmd.Commands() {
-			if cmd.Use == selectedOption {
-				selectedCmd = cmd
-				break
-			}
-			selectedCmd.SetArgs([]string{selectedOption, "--config", configPath})
-		}
-	} else {
-		rootCmd.SetArgs([]string{selectedOption})
-	}
-
+	rootCmd.SetArgs([]string{selectedOption})
 	if err != nil {
 		fmt.Fprintf(stderr, "failed to create root command: %s\n", err)
 		return exitError
