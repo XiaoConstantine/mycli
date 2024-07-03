@@ -74,9 +74,9 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 				}
 				survey.AskOne(forcePrompt, &force)
 			}
+
 			if installChoice == "Everything" {
 				// Run all install subcommands
-
 				fmt.Fprintln(iostream.Out, cs.GreenBold("Running all installation subcommands..."))
 				for _, subcmd := range cmd.Commands() {
 					fmt.Printf("Running installation for %s...\n", subcmd.Use)
@@ -88,6 +88,7 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 							subcmd.Flags().Set("force", "true")
 						}
 					}
+
 					if err := subcmd.RunE(subcmd, args); err != nil {
 						fmt.Fprintf(iostream.ErrOut, "Error installing %s: %v\n", subcmd.Use, err)
 
@@ -96,6 +97,7 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 						subSpan.Finish()
 						return err
 					}
+
 					subSpan.SetTag("status", "success")
 					subSpan.Finish()
 				}

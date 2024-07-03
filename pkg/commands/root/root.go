@@ -10,13 +10,16 @@ import (
 	"mycli/pkg/commands/install"
 	"mycli/pkg/iostreams"
 	"mycli/pkg/utils"
-	"os"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/spf13/cobra"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
+
+type NoOpLogger struct{}
+
+func (l NoOpLogger) Log(msg string) {}
 
 type exitCode int
 
@@ -48,21 +51,6 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 
 	rootCmd.AddCommand(installCmd)
 	rootCmd.PersistentFlags().Bool("help", false, "Show help for command")
-	if os.Getenv("GH_COBRA") == "" {
-		rootCmd.SilenceErrors = true
-		rootCmd.SilenceUsage = true
-
-		// this --version flag is checked in rootHelpFunc
-		// rootCmd.Flags().Bool("version", false, "Show gh version")
-
-		// rootCmd.SetHelpFunc(func(c *cobra.Command, args []string) {
-		// 	rootHelpFunc(f, c, args)
-		// })
-		// rootCmd.SetUsageFunc(func(c *cobra.Command) error {
-		// 	return rootUsageFunc(f.IOStreams.ErrOut, c)
-		// })
-		// rootCmd.SetFlagErrorFunc(rootFlagErrorFunc)
-	}
 	return rootCmd, nil
 }
 
@@ -74,12 +62,14 @@ func Run() exitCode {
 	utils.PrintWelcomeMessage(iostream)
 	rootCmd, err := NewRootCmd(iostream)
 
+	// todo: make optional for tracing
 	tracer.Start(
 		tracer.WithService("mycli"),
 		tracer.WithEnv("development"),
 		tracer.WithServiceVersion("1.0.0"),
 		tracer.WithLogStartup(false),
 		tracer.WithDebugMode(false),
+		tracer.WithLogger(NoOpLogger{}),
 		tracer.WithAgentAddr("localhost:8126"),
 	)
 	defer tracer.Stop()

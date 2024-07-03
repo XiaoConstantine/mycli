@@ -8,6 +8,7 @@ require (
 	github.com/cli/safeexec v1.0.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/muesli/termenv v0.15.2
+	github.com/olekukonko/tablewriter v0.0.5
 	github.com/stretchr/testify v1.9.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.65.1
 	gopkg.in/yaml.v2 v2.4.0
