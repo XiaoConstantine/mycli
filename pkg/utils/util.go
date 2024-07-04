@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"mycli/pkg/iostreams"
+	"net/url"
 	"os"
 	"os/exec"
 	"os/user"
@@ -91,6 +92,31 @@ func GetOsInfo() map[string]string {
 	user, _ := user.Current()
 
 	return map[string]string{"sysname": sysname, "release": release, "user": user.Username}
+}
+
+func ConvertToRawGitHubURL(inputURL string) (string, error) {
+	parsedURL, err := url.Parse(inputURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL: %v", err)
+	}
+
+	if parsedURL.Host != "github.com" {
+		return inputURL, nil // Not a GitHub URL, return as-is
+	}
+
+	pathParts := strings.Split(parsedURL.Path, "/")
+	if len(pathParts) < 5 {
+		return "", fmt.Errorf("invalid GitHub URL format")
+	}
+
+	// Reconstruct the URL for raw content
+	rawURL := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/%s",
+		pathParts[1],                     // username
+		pathParts[2],                     // repository
+		pathParts[4],                     // branch (usually "master" or "main")
+		strings.Join(pathParts[5:], "/")) // file path
+
+	return rawURL, nil
 }
 
 func getRandomASCIILogo() string {

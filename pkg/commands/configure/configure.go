@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -159,6 +160,22 @@ func configureTool(item utils.ConfigureItem, ctx context.Context, force bool) er
 	if err != nil {
 		return fmt.Errorf("failed to create directory: %v", err)
 	}
+	// Convert URL if it's a GitHub URL
+	convertedURL, err := utils.ConvertToRawGitHubURL(item.ConfigURL)
+	if err != nil {
+		return fmt.Errorf("error converting URL: %v", err)
+	}
+	item.ConfigURL = convertedURL
+	// Validate the URL
+	parsedURL, err := url.Parse(item.ConfigURL)
+	fmt.Println(parsedURL)
+	if err != nil {
+		return fmt.Errorf("invalid configuration URL: %v", err)
+	}
+
+	if parsedURL.Scheme == "" {
+		return fmt.Errorf("URL scheme is missing. Please provide a complete URL including http:// or https://")
+	}
 
 	// Download the configuration file
 	resp, err := http.Get(item.ConfigURL)
@@ -166,6 +183,10 @@ func configureTool(item utils.ConfigureItem, ctx context.Context, force bool) er
 		return fmt.Errorf("failed to download configuration: %v", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to download configuration: HTTP status %d", resp.StatusCode)
+	}
 
 	// Create the configuration file
 	out, err := os.Create(installPath)
