@@ -33,13 +33,20 @@ func IsAdmin(u *user.User) bool {
 }
 
 type ToolConfig struct {
-	Tools []Tool `yaml:"tools"`
+	Tools     []Tool          `yaml:"tools"`
+	Configure []ConfigureItem `yaml:"configure"`
 }
 
 type Tool struct {
 	Name           string `yaml:"name"`
 	Method         string `yaml:"method,omitempty"` // Optional, for specifying 'cask' or other Homebrew methods
 	InstallCommand string `yaml:"install_command,omitempty"`
+}
+
+type ConfigureItem struct {
+	Name        string `yaml:"name"`
+	ConfigURL   string `yaml:"config_url"`
+	InstallPath string `yaml:"install_path"`
 }
 
 // LoadToolsConfig loads tool configuration from a YAML file.
@@ -53,6 +60,16 @@ func LoadToolsConfig(filename string) (*ToolConfig, error) {
 		return nil, err
 	}
 	return &config, nil
+}
+
+// GetConfigureItem retrieves a specific configuration item by name
+func (tc *ToolConfig) GetConfigureItem(name string) (*ConfigureItem, error) {
+	for _, item := range tc.Configure {
+		if item.Name == name {
+			return &item, nil
+		}
+	}
+	return nil, fmt.Errorf("configuration for %s not found", name)
 }
 
 func GetSubcommandNames(cmd *cobra.Command) []string {

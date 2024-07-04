@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"mycli/pkg/commands/configure"
 	"mycli/pkg/commands/install"
 	"mycli/pkg/iostreams"
 	"mycli/pkg/utils"
@@ -47,9 +48,17 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 			Title: "Install commands",
 		})
 
+	rootCmd.AddGroup(
+		&cobra.Group{
+			ID:    "configure",
+			Title: "Configure commands",
+		})
+
 	installCmd := install.NewInstallCmd(iostream)
+	configureCmd := configure.NewConfigureCmd(iostream)
 
 	rootCmd.AddCommand(installCmd)
+	rootCmd.AddCommand(configureCmd)
 	rootCmd.PersistentFlags().Bool("help", false, "Show help for command")
 	return rootCmd, nil
 }
