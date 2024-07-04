@@ -10,7 +10,7 @@ github cli.
 
 mycli contain three main command group:
 * install - Install packages, tools, etc
-* configure - Configure tooling, zshrc, neovim config etc (TODO)
+* configure - Configure tooling, zshrc, neovim config etc
 * extension - Wrap around project build system, AI assistant etc (TODO)
 
 For install, my cli takes a `config.yaml` defined by user:
@@ -29,6 +29,10 @@ tools:
     install_command: "gcloud components install beta pubsub-emulator bq cloud_sql_proxy gke-gcloud-auth-plugin"
   - name: "uv"
     install_command: "curl -LsSf https://astral.sh/uv/install.sh | sh"
+configure:
+  - name: "neovim"
+    config_url: "https://github.com/XiaoConstantine/nvim_lua_config/blob/master/init.lua"
+    install_path: "~/.config/nvim/init.vim"
 ```
 
 Getting Started
