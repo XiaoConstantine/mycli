@@ -13,6 +13,8 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
+var execCommandContext = exec.CommandContext
+
 // NewCmdHomeBrew creates a new cobra.Command that installs Homebrew on the system.
 // It checks if the current user is an administrator, and if so, runs the Homebrew
 // installation script using the current user's credentials. If the current user
@@ -48,7 +50,7 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 			}
 
 			fmt.Fprint(iostream.Out, cs.Green("Installing homebrew with su current user, enter your password when prompt\n"))
-			installCmd := exec.CommandContext(ctx, "su", currentUser.Username, "-c", `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)
+			installCmd := execCommandContext(ctx, "su", currentUser.Username, "-c", `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)
 
 			installCmd.Stdout = os.Stdout
 			installCmd.Stderr = os.Stderr
@@ -72,7 +74,7 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 // IsHomebrewInstalled checks if Homebrew is installed on the system.
 func IsHomebrewInstalled(ctx context.Context) bool {
 	// The 'which' command searches for the Homebrew executable in the system path.
-	cmd := exec.CommandContext(ctx, "which", "brew")
+	cmd := execCommandContext(ctx, "which", "brew")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return false // 'which' did not find the Homebrew binary, or another error occurred

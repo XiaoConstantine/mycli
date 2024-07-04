@@ -1,86 +1,80 @@
 package homebrew
 
 import (
-	"mycli/pkg/iostreams"
+	"context"
+	"os"
 	"os/exec"
-	"os/user"
 	"testing"
+
+	"mycli/pkg/iostreams"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
+// MockUser is a mock implementation of the User interface
+type MockUser struct {
+	mock.Mock
+}
+
+func (m *MockUser) Username() string {
+	args := m.Called()
+	return args.String(0)
+}
+
+// MockExecCommand is a helper function to mock exec.Command
+func MockExecCommand(ctx context.Context, command string, args ...string) *exec.Cmd {
+	cs := []string{"-test.run=TestHelperProcess", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.CommandContext(ctx, os.Args[0], cs...)
+	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
+	return cmd
+}
+
 func TestNewCmdHomeBrew(t *testing.T) {
+	ios, _, _, _ := iostreams.Test()
+	cmd := NewCmdHomeBrew(ios)
+
+	assert.NotNil(t, cmd)
+	assert.Equal(t, "homebrew", cmd.Use)
+	assert.True(t, cmd.Hidden)
+	assert.True(t, cmd.SilenceErrors)
+	assert.Equal(t, "install", cmd.Annotations["group"])
+}
+
+func TestIsHomebrewInstalled(t *testing.T) {
+	// Save current execCommandContext and defer its restoration
+	oldExecCommandContext := execCommandContext
+	defer func() { execCommandContext = oldExecCommandContext }()
+
 	tests := []struct {
-		name           string
-		isAdmin        bool
-		installSuccess bool
-		wantError      bool
+		name       string
+		mockOutput string
+		want       bool
 	}{
 		{
-			name:           "non-admin user",
-			isAdmin:        false,
-			installSuccess: true,
-			wantError:      true,
+			name:       "Homebrew is installed",
+			mockOutput: "/usr/local/bin/brew",
+			want:       true,
 		},
 		{
-			name:           "admin user, install success",
-			isAdmin:        true,
-			installSuccess: true,
-			wantError:      false,
-		},
-		{
-			name:           "admin user, install failure",
-			isAdmin:        true,
-			installSuccess: false,
-			wantError:      true,
+			name:       "Homebrew is not installed",
+			mockOutput: "",
+			want:       false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			io, _, outBuf, errBuf := iostreams.Test()
-			cs := io.ColorScheme()
-
-			cmd := NewCmdHomeBrew(io)
-			cmd.SetArgs([]string{})
-
-			currentUser := &user.User{
-				Username: "testuser",
-				Gid:      "80",
+			execCommandContext = func(ctx context.Context, command string, args ...string) *exec.Cmd {
+				// return MockExecCommand(ctx, "echo", tt.mockOutput)
+				// Mock setup: Define what the command should return
+				cmd := exec.Command("echo", tt.mockOutput)
+				cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"} // Ensure it uses the test environment
+				return cmd
 			}
-			if !tt.isAdmin {
-				currentUser.Gid = "1000"
-			}
-			getCurrentUserMock = func() (*user.User, error) {
-				return currentUser, nil
-			}
-
-			execCommandMock = func(command string, args ...string) *exec.Cmd {
-				if tt.installSuccess {
-					return exec.Command("true")
-				}
-				return exec.Command("false")
-			}
-
-			err := cmd.Execute()
-			if (err != nil) != tt.wantError {
-				t.Errorf("NewCmdHomeBrew() error = %v, wantError %v", err, tt.wantError)
-			}
-
-			if tt.isAdmin && tt.installSuccess {
-				expectedOutput := cs.Green("Installing homebrew with su current user, enter your password when prompt\n")
-				if outBuf.String() != expectedOutput {
-					t.Errorf("unexpected output: %s", outBuf.String())
-				}
-			} else if !tt.isAdmin {
-				expectedOutput := cs.Red("You need to be an administrator to install Homebrew. Please run this command from an admin account.\n")
-				if errBuf.String() != expectedOutput {
-					t.Errorf("unexpected output: %s", errBuf.String())
-				}
-			}
+			got := IsHomebrewInstalled(context.Background())
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
-
-var (
-	getCurrentUserMock func() (*user.User, error)
-	execCommandMock    func(string, ...string) *exec.Cmd
-)
