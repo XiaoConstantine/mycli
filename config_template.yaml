@@ -1,13 +1,24 @@
 # template.yaml
-# Use this template to define tools for installation.
+# Use this template to define tools for installation and configuration.
 # Fill out the details according to the specifications below.
-#
+
+# Installation section
 # Fields:
 #   - name: Name of the tool (required)
 #   - method: Installation method, e.g., 'cask' for Homebrew Cask (optional)
 #   - install_command: Custom command to install the tool (optional)
-
 tools:
   - name: "example_tool_name" # Replace 'example_tool_name' with the actual tool name.
     # method: "cask"            # Uncomment if this tool should be installed as a Homebrew cask.
     # install_command: "custom_command_to_install_tool"  # Uncomment and replace with the actual install command if a custom method is needed.
+
+# Configuration section
+# Fields:
+#   - name: Name of the tool to configure (required)
+#   - config_url: URL to the configuration file (required)
+#   - install_path: Path where the configuration should be installed (required)
+configure:
+  - name: "neovim"
+    config_url: "https://github.com/example/neovim-config/raw/main/init.vim"
+    install_path: "~/.config/nvim/init.vim"
+  # Add more tools to configure as needed, following the same structure
