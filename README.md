@@ -33,6 +33,23 @@ tools:
 
 Getting Started
 ---------------
+
+* Install
+
+```bash
+curl -sSf https://xiaoconstantine.github.io/mycli/scripts/install.sh | sh
+```
+
+then:
+
+```bash
+mycli
+```
+
+
+
+Development
+-----------
 * Make sure you have go >= 1.21 installed
 
 * Build binary
