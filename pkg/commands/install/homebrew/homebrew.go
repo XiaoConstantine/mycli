@@ -42,7 +42,7 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams) *cobra.Command {
 				return nil
 			}
 
-			if !utils.IsAdmin(currentUser) {
+			if !utils.IsAdmin(ctx, currentUser) {
 				fmt.Println(cs.Red("You need to be an administrator to install Homebrew. Please run this command from an admin account."))
 				span.SetTag("error", true)
 				span.Finish(tracer.WithError(os.ErrPermission))
