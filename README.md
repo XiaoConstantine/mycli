@@ -1,5 +1,11 @@
 # mycli
 
+
+[![Release](https://github.com/XiaoConstantine/mycli/actions/workflows/release.yml/badge.svg)](https://github.com/XiaoConstantine/mycli/actions/workflows/release.yml)
+
+[![Lint](https://github.com/XiaoConstantine/mycli/actions/workflows/lint.yml/badge.svg)](https://github.com/XiaoConstantine/mycli/actions/workflows/lint.yml)
+
+
 `mycli` is a Cobra-based CLI tool designed to bootstrap macOS machines with a focus on observability and efficiency, influenced by the design of the GitHub CLI.
 
 ## Introduction
