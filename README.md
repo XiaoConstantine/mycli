@@ -1,31 +1,46 @@
+# mycli
+
+`mycli` is a Cobra-based CLI tool designed to bootstrap macOS machines with a focus on observability and efficiency, influenced by the design of the GitHub CLI.
+
+## Introduction
+
+`mycli` streamlines the setup of development environments on macOS, providing easy command-line access to install and configure essential software tools. It's built around three main command groups:
+
+- `install`: Installs packages and tools.
+- `configure`: Sets up configurations for tools like zsh, Neovim, etc.
+- `extension`: (TODO) Extends functionality to support project build systems and integrate AI assistants.
+
+## Features
+
+- **Simplified Installation**: Uses `brew install` by default or custom commands where specified.
+- **GUI Tool Support**: Supports Homebrew Cask for GUI applications.
+- **Flexible Configuration**: Allows custom installation scripts and configuration settings.
+
+## Getting Started
+
+### Installation
+
+To install `mycli`, run the following command:
+
+```bash
+curl -sSf https://xiaoconstantine.github.io/mycli/scripts/install.sh | sh
+```
+
+After installation, you can start using mycli by simply typing:
+
+```bash
 mycli
------
+```
 
-A cobra based CLI for bootstrap machine with observability
-
-Intro
------
-mycli is a tool for bootstrapping macos based on cobra and influenced by
-github cli.
-
-mycli contain three main command group:
-* install - Install packages, tools, etc
-* configure - Configure tooling, zshrc, neovim config etc
-* extension - Wrap around project build system, AI assistant etc (TODO)
-
-For install, my cli takes a `config.yaml` defined by user:
-
-By default:
-- if just a tool name is provided, `brew install` will be used,
-- `cask` is installing GUI tools, i.e. `alacritty`
-- `install_command` will be used if user provide, see example below
+### Configuration
+mycli uses a config.yaml file to define which tools and configurations to apply. Here’s an example of what this file might look like:
 
 ```yaml
 tools:
-  - name: "neovim" # Will use Homebrew by default
+  - name: "neovim"
   - name: "alacritty"
-    method: "cask" # Specifies this is a Homebrew cask
-  - name: "gcloud util" # Use custom install_command
+    method: "cask"
+  - name: "gcloud util"
     install_command: "gcloud components install beta pubsub-emulator bq cloud_sql_proxy gke-gcloud-auth-plugin"
   - name: "uv"
     install_command: "curl -LsSf https://astral.sh/uv/install.sh | sh"
@@ -35,33 +50,26 @@ configure:
     install_path: "~/.config/nvim/init.vim"
 ```
 
-Getting Started
----------------
-
-* Install
+## Development
+Ensure you have Go version 1.21 or higher installed. You can check your Go version by running:
 
 ```bash
-curl -sSf https://xiaoconstantine.github.io/mycli/scripts/install.sh | sh
+go version
 ```
 
-then:
+Building the Binary
 
-```bash
-mycli
-```
-
-
-
-Development
------------
-* Make sure you have go >= 1.21 installed
-
-* Build binary
 ```bash
 go build -o mycli ./cmd/main.go
 ```
 
-* Run directly
+Running Locally
+To run mycli directly from source during development:
+
 ```bash
 go run ./cmd/main.go
 ```
+
+## License
+
+mycli is made available under the MIT License.
