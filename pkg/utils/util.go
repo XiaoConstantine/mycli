@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"mycli/pkg/iostreams"
@@ -16,6 +17,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var execCommandContext = exec.CommandContext
+
 func GetCurrentUser() (*user.User, error) {
 	return user.Current()
 }
@@ -23,8 +26,8 @@ func GetCurrentUser() (*user.User, error) {
 // isAdmin checks if the given user is a member of the "admin" group.
 // It uses the "groups" command to list the groups the user belongs to,
 // and returns true if the output contains the "admin" group.
-func IsAdmin(u *user.User) bool {
-	cmd := exec.Command("groups", u.Username)
+func IsAdmin(ctx context.Context, u *user.User) bool {
+	cmd := execCommandContext(ctx, "groups", u.Username)
 	output, err := cmd.Output()
 	if err != nil {
 		fmt.Printf("Error checking groups: %v\n", err)

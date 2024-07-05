@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"os/user"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -70,8 +71,49 @@ func (m *MockCommand) CommandContext(ctx context.Context, command string, args .
 	return cmd
 }
 
-// func TestIsAdmin(t *testing.T) {
-// 	u := &user.User{Username: "username", Gid: "0"}
-// 	isAdmin := IsAdmin(u)
-// 	assert.True(t, isAdmin)
-// }
+func TestIsAdmin(t *testing.T) {
+	// Save the current execCommandContext and restore it after the tests
+	oldExecCommandContext := execCommandContext
+	defer func() { execCommandContext = oldExecCommandContext }()
+
+	tests := []struct {
+		name        string
+		mockOutput  string
+		shouldError bool
+		want        bool
+	}{
+		{
+			name:       "User is admin",
+			mockOutput: "username admin wheel",
+			want:       true,
+		},
+		{
+			name:       "User is not admin",
+			mockOutput: "username wheel",
+			want:       false,
+		},
+		{
+			name:        "Command fails",
+			mockOutput:  "",
+			shouldError: true,
+			want:        false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Mock the execCommandContext function
+			execCommandContext = func(ctx context.Context, command string, args ...string) *exec.Cmd {
+				cmd := exec.Command("echo", tt.mockOutput)
+				cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"} // Ensure it uses the test environment
+				return cmd
+			}
+
+			// Create a user and pass it to IsAdmin
+			u := &user.User{Username: "username"}
+			ctx := context.Background()
+			got := IsAdmin(ctx, u)
+			assert.Equal(t, tt.want, got, "IsAdmin did not return expected value")
+		})
+	}
+}
