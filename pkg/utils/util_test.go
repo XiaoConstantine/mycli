@@ -57,7 +57,7 @@ tools:
 	assert.Error(t, err)
 }
 
-// Mock for the exec.Command
+// Mock for the exec.Command.
 type MockCommand struct {
 	mock.Mock
 }

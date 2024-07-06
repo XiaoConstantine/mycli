@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// MockUser is a mock implementation of the User interface
+// MockUser is a mock implementation of the User interface.
 type MockUser struct {
 	mock.Mock
 }
@@ -22,7 +22,7 @@ func (m *MockUser) Username() string {
 	return args.String(0)
 }
 
-// MockExecCommand is a helper function to mock exec.Command
+// MockExecCommand is a helper function to mock exec.Command.
 func MockExecCommand(ctx context.Context, command string, args ...string) *exec.Cmd {
 	cs := []string{"-test.run=TestHelperProcess", "--", command}
 	cs = append(cs, args...)

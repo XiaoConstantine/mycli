@@ -31,13 +31,13 @@ func (fe *FlagError) Unwrap() error {
 	return fe.err
 }
 
-// SilentError is an error that triggers exit code 1 without any error messaging
+// SilentError is an error that triggers exit code 1 without any error messaging.
 var SilentError = errors.New("SilentError")
 
-// CancelError signals user-initiated cancellation
+// CancelError signals user-initiated cancellation.
 var CancelError = errors.New("CancelError")
 
-// PendingError signals nothing failed but something is pending
+// PendingError signals nothing failed but something is pending.
 var PendingError = errors.New("PendingError")
 
 var ConfigNotFoundError = errors.New("Config file not found")

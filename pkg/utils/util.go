@@ -66,7 +66,7 @@ func LoadToolsConfig(filename string) (*ToolConfig, error) {
 	return &config, nil
 }
 
-// GetConfigureItem retrieves a specific configuration item by name
+// GetConfigureItem retrieves a specific configuration item by name.
 func (tc *ToolConfig) GetConfigureItem(name string) (*ConfigureItem, error) {
 	for _, item := range tc.Configure {
 		if item.Name == name {
