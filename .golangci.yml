@@ -1,8 +1,11 @@
 linters:
+  disable-all: true
   enable:
-  - gofmt
-  - nolintlint
-
-issues:
-  max-issues-per-linter: 0
-  max-same-issues: 0
+    - errcheck
+    - godot
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused

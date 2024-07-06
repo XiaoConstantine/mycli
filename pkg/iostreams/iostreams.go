@@ -357,7 +357,7 @@ func (s *IOStreams) RefreshScreen() {
 	}
 }
 
-// TerminalWidth returns the width of the terminal that controls the process
+// TerminalWidth returns the width of the terminal that controls the process.
 func (s *IOStreams) TerminalWidth() int {
 	w, _, err := s.term.Size()
 	if err == nil && w > 0 {
@@ -505,7 +505,7 @@ func (w *pagerWriter) Write(d []byte) (int, error) {
 	return n, err
 }
 
-// fdWriter represents a wrapped stdout Writer that preserves the original file descriptor
+// fdWriter represents a wrapped stdout Writer that preserves the original file descriptor.
 type fdWriter struct {
 	io.Writer
 	fd uintptr
@@ -515,7 +515,7 @@ func (w *fdWriter) Fd() uintptr {
 	return w.fd
 }
 
-// fdWriteCloser represents a wrapped stdout Writer that preserves the original file descriptor
+// fdWriteCloser represents a wrapped stdout Writer that preserves the original file descriptor.
 type fdWriteCloser struct {
 	io.WriteCloser
 	fd uintptr
@@ -525,7 +525,7 @@ func (w *fdWriteCloser) Fd() uintptr {
 	return w.fd
 }
 
-// fdWriter represents a wrapped stdin ReadCloser that preserves the original file descriptor
+// fdWriter represents a wrapped stdin ReadCloser that preserves the original file descriptor.
 type fdReader struct {
 	io.ReadCloser
 	fd uintptr
