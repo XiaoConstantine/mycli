@@ -1,0 +1,8 @@
+tools:
+  - name: "neovim" # Replace 'example_tool_name' with the actual tool name.
+  - name: "zed"
+    method: "cask" # Uncomment if this tool should be installed as a Homebrew cask.
+configure:
+  - name: "neovim"
+    config_url: "https://github.com/example/neovim-config/raw/main/init.vim"
+    install_path: "~/.config/nvim/init.vim"
