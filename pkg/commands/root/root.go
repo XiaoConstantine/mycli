@@ -99,9 +99,8 @@ func Run(args []string) ExitCode {
 	}
 
 	rootCmd.SetArgs(args)
-	fmt.Println(args[0])
 	// Hack: Check for non-interactive mode
-	if args[0] == "--non-interactive" {
+	if len(args) > 0 && args[0] == "--non-interactive" {
 		nonInteractive = true
 	}
 
