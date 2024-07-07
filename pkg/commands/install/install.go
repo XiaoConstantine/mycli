@@ -33,23 +33,12 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 			var installChoice string
 			var configPath string
 			var force bool
-			prompt := &survey.Select{
-				Message: "What would you like to install?",
-				Options: append([]string{"Everything"}, utils.GetSubcommandNames(cmd)...),
-			}
-			if err := survey.AskOne(prompt, &installChoice); err != nil {
-				return os.ErrExist
-			}
+			nonInteractive, _ := cmd.Flags().GetBool("non-interactive")
 
-			if installChoice == "Everything" || installChoice == "tools" {
-				// Prompt for config file path
-				configPrompt := &survey.Input{
-					Message: "Enter the path to the config file:",
-					Default: "config.yaml",
-				}
-				if err := survey.AskOne(configPrompt, &configPath); err != nil {
-					return os.ErrExist
-				}
+			if nonInteractive {
+				configPath, _ = cmd.Flags().GetString("config")
+				force, _ = cmd.Flags().GetBool("force")
+
 				configPath = os.ExpandEnv(configPath)
 				// Replace ~ with home directory
 				if strings.HasPrefix(configPath, "~") {
@@ -70,19 +59,14 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 					fmt.Fprintf(iostream.ErrOut, "Error: Config file does not exist at path: %s\n", configPath)
 					return err
 				}
+				if force {
+					if err := cmd.Flags().Set("force", "true"); err != nil {
+						fmt.Fprintf(iostream.ErrOut, "failed to set force flag: %s\n", err)
+						return err
+					}
 
-				// Prompt for force flag
-				forcePrompt := &survey.Confirm{
-					Message: "Do you want to force reinstall of casks?",
-					Default: false,
 				}
-				if err := survey.AskOne(forcePrompt, &force); err != nil {
-					return os.ErrExist
-				}
-			}
 
-			if installChoice == "Everything" {
-				// Run all install subcommands
 				fmt.Fprintln(iostream.Out, cs.GreenBold("Running all installation subcommands..."))
 				for _, subcmd := range cmd.Commands() {
 					fmt.Printf("Running installation for %s...\n", subcmd.Use)
@@ -114,18 +98,66 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 					subSpan.Finish()
 				}
 				fmt.Fprintln(iostream.Out, cs.GreenBold("All installations completed successfully."))
-			} else {
-				// Run the specific chosen subcommand
-				fmt.Fprintln(iostream.Out, cs.GreenBold("Running installation for: %s..."), installChoice)
-				for _, subcmd := range cmd.Commands() {
-					if subcmd.Use == installChoice {
-						fmt.Printf("Running installation for %s...\n", installChoice)
+				return nil
 
+			} else {
+
+				prompt := &survey.Select{
+					Message: "What would you like to install?",
+					Options: append([]string{"Everything"}, utils.GetSubcommandNames(cmd)...),
+				}
+				if err := survey.AskOne(prompt, &installChoice); err != nil {
+					return os.ErrExist
+				}
+
+				if installChoice == "Everything" || installChoice == "tools" {
+					// Prompt for config file path
+					configPrompt := &survey.Input{
+						Message: "Enter the path to the config file:",
+						Default: "config.yaml",
+					}
+					if err := survey.AskOne(configPrompt, &configPath); err != nil {
+						return os.ErrExist
+					}
+					configPath = os.ExpandEnv(configPath)
+					// Replace ~ with home directory
+					if strings.HasPrefix(configPath, "~") {
+						home, err := os.UserHomeDir()
+						if err == nil {
+							configPath = filepath.Join(home, configPath[1:])
+						}
+					}
+
+					// Get the absolute path
+					absPath, err := filepath.Abs(configPath)
+					if err == nil {
+						configPath = absPath
+					}
+					fmt.Println(configPath)
+					// Validate the file path
+					if _, err := os.Stat(configPath); os.IsNotExist(err) {
+						fmt.Fprintf(iostream.ErrOut, "Error: Config file does not exist at path: %s\n", configPath)
+						return err
+					}
+
+					// Prompt for force flag
+					forcePrompt := &survey.Confirm{
+						Message: "Do you want to force reinstall of casks?",
+						Default: false,
+					}
+					if err := survey.AskOne(forcePrompt, &force); err != nil {
+						return os.ErrExist
+					}
+				}
+
+				if installChoice == "Everything" {
+					// Run all install subcommands
+					fmt.Fprintln(iostream.Out, cs.GreenBold("Running all installation subcommands..."))
+					for _, subcmd := range cmd.Commands() {
+						fmt.Printf("Running installation for %s...\n", subcmd.Use)
 						subSpan, subCtx := tracer.StartSpanFromContext(ctx, "install_"+subcmd.Use)
 						subcmd.SetContext(subCtx)
-						args := []string{}
-						if installChoice == "tools" {
-							args = append(args, "--config", configPath)
+						if subcmd.Use == "tools" {
 							if err := subcmd.Flags().Set("config", configPath); err != nil {
 								fmt.Fprintf(iostream.ErrOut, "failed to set config flag: %s\n", err)
 								return err
@@ -137,20 +169,58 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 								}
 							}
 						}
+
 						if err := subcmd.RunE(subcmd, args); err != nil {
-							fmt.Fprintf(iostream.ErrOut, "Error installing %s: %v\n", installChoice, err)
+							fmt.Fprintf(iostream.ErrOut, "Error installing %s: %v\n", subcmd.Use, err)
+
 							subSpan.SetTag("status", "failed")
 							subSpan.SetTag("error", err)
 							subSpan.Finish()
 							return err
 						}
+
 						subSpan.SetTag("status", "success")
 						subSpan.Finish()
-						break
+					}
+					fmt.Fprintln(iostream.Out, cs.GreenBold("All installations completed successfully."))
+				} else {
+					// Run the specific chosen subcommand
+					fmt.Fprintln(iostream.Out, cs.GreenBold("Running installation for: %s..."), installChoice)
+					for _, subcmd := range cmd.Commands() {
+						if subcmd.Use == installChoice {
+							fmt.Printf("Running installation for %s...\n", installChoice)
+
+							subSpan, subCtx := tracer.StartSpanFromContext(ctx, "install_"+subcmd.Use)
+							subcmd.SetContext(subCtx)
+							args := []string{}
+							if installChoice == "tools" {
+								args = append(args, "--config", configPath)
+								if err := subcmd.Flags().Set("config", configPath); err != nil {
+									fmt.Fprintf(iostream.ErrOut, "failed to set config flag: %s\n", err)
+									return err
+								}
+								if force {
+									if err := subcmd.Flags().Set("force", "true"); err != nil {
+										fmt.Fprintf(iostream.ErrOut, "failed to set force flag: %s\n", err)
+										return err
+									}
+								}
+							}
+							if err := subcmd.RunE(subcmd, args); err != nil {
+								fmt.Fprintf(iostream.ErrOut, "Error installing %s: %v\n", installChoice, err)
+								subSpan.SetTag("status", "failed")
+								subSpan.SetTag("error", err)
+								subSpan.Finish()
+								return err
+							}
+							subSpan.SetTag("status", "success")
+							subSpan.Finish()
+							break
+						}
 					}
 				}
+				return nil
 			}
-			return nil
 		},
 	}
 

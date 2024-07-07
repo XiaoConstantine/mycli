@@ -84,3 +84,94 @@ configure:
 	// Clean up the created file
 	os.Remove(expectedConfigPath)
 }
+
+func TestInstallCommand(t *testing.T) {
+	// Set up a temporary directory to act as the home directory
+	fakeHomeDir, err := os.MkdirTemp("", "fake-home")
+	require.NoError(t, err)
+	defer os.RemoveAll(fakeHomeDir)
+
+	// Save the original home directory and set it back after the test
+	originalHome := os.Getenv("HOME")
+	defer os.Setenv("HOME", originalHome)
+
+	// Set the fake home directory
+	os.Setenv("HOME", fakeHomeDir)
+
+	// Set up a temporary directory for the test
+	tempDir, err := os.MkdirTemp("", "mycli-test")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	// Create a test config file for tools
+	configPath := filepath.Join(tempDir, "test_config.yaml")
+	testConfig := `
+tools:
+  - name: test-tool
+    cask: test-cask
+`
+	err = os.WriteFile(configPath, []byte(testConfig), 0644)
+	require.NoError(t, err)
+
+	// Test install homebrew
+	t.Run("Install Homebrew", func(t *testing.T) {
+		args := []string{"--non-interactive", "install", "homebrew"}
+		exitCode := root.Run(args)
+		assert.Equal(t, root.ExitCode(0), exitCode)
+
+		// Check if Homebrew is installed
+		// This is a simple check and might need to be adjusted based on your actual installation process
+		// _, err := os.Stat("/usr/local/bin/brew")
+		_, err := os.Stat("/opt/homebrew/bin/brew")
+
+		assert.NoError(t, err, "Homebrew was not installed")
+	})
+
+	// Test install Xcode
+	t.Run("Install Xcode", func(t *testing.T) {
+		args := []string{"--non-interactive", "install", "xcode"}
+		exitCode := root.Run(args)
+		assert.Equal(t, root.ExitCode(0), exitCode)
+
+		// Check if Xcode is installed
+		// This is a simple check and might need to be adjusted based on your actual installation process
+		_, err := os.Stat("/Applications/Xcode.app")
+		assert.NoError(t, err, "Xcode was not installed")
+	})
+
+	// Test install tools
+	// t.Run("Install Tools", func(t *testing.T) {
+	// 	args := []string{"--non-interactive", "install", "tools", "--config", configPath, "--force"}
+	// 	exitCode := root.Run(args)
+	// 	assert.Equal(t, root.ExitCode(0), exitCode)
+
+	// 	// Check if the test-tool was installed
+	// 	// This is a simple check and might need to be adjusted based on your actual installation process
+	// 	expectedToolDir := filepath.Join(fakeHomeDir, "test-tool")
+	// 	_, err := os.Stat(expectedToolDir)
+	// 	assert.NoError(t, err, "Expected tool directory was not created")
+	// })
+
+	// // Test install everything
+	// t.Run("Install Everything", func(t *testing.T) {
+	// 	args := []string{"--non-interactive", "install", "--config", configPath, "--force"}
+	// 	exitCode := root.Run(args)
+	// 	assert.Equal(t, root.ExitCode(0), exitCode)
+
+	// 	// Check if Homebrew is installed
+	// 	_, err := os.Stat("/opt/homebrew/bin/brew")
+	// 	assert.NoError(t, err, "Homebrew was not installed")
+
+	// 	// Check if Xcode is installed
+	// 	_, err = os.Stat("/Applications/Xcode.app")
+	// 	assert.NoError(t, err, "Xcode was not installed")
+
+	// 	// Check if the test-tool was installed
+	// 	expectedToolDir := filepath.Join(fakeHomeDir, "test-tool")
+	// 	_, err = os.Stat(expectedToolDir)
+	// 	assert.NoError(t, err, "Expected tool directory was not created")
+	// })
+
+	// Clean up any created files or directories
+	os.RemoveAll(filepath.Join(fakeHomeDir, "test-tool"))
+}
