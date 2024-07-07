@@ -9,6 +9,6 @@ import (
 )
 
 func main() {
-	code := root.Run()
+	code := root.Run([]string{})
 	os.Exit(int(code))
 }

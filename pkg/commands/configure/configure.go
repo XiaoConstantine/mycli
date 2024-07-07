@@ -35,63 +35,104 @@ func NewConfigureCmd(iostream *iostreams.IOStreams) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			span, ctx := tracer.StartSpanFromContext(cmd.Context(), "configure_tools")
 			defer span.Finish()
+			nonInteractive, _ := cmd.Flags().GetBool("non-interactive")
 
 			var configPath string
 			var force bool
-			// Prompt for config file path
-			configPrompt := &survey.Input{
-				Message: "Enter the path to the config file:",
-				Default: "config.yaml",
-			}
-			if err := survey.AskOne(configPrompt, &configPath); err != nil {
-				return os.ErrExist
-			}
-			configPath = os.ExpandEnv(configPath)
-			// Replace ~ with home directory
-			if strings.HasPrefix(configPath, "~") {
-				home, err := os.UserHomeDir()
-				if err == nil {
-					configPath = filepath.Join(home, configPath[1:])
+
+			if nonInteractive {
+				configPath, _ = cmd.Flags().GetString("config")
+				force, _ = cmd.Flags().GetBool("force")
+
+				configPath = os.ExpandEnv(configPath)
+				// Replace ~ with home directory
+				if strings.HasPrefix(configPath, "~") {
+					home, err := os.UserHomeDir()
+					if err == nil {
+						configPath = filepath.Join(home, configPath[1:])
+					}
 				}
-			}
 
-			// Get the absolute path
-			absPath, err := filepath.Abs(configPath)
-			if err == nil {
-				configPath = absPath
-			}
-			fmt.Println(configPath)
-			// Validate the file path
-			if _, err := os.Stat(configPath); os.IsNotExist(err) {
-				fmt.Fprintf(iostream.ErrOut, "Error: Config file does not exist at path: %s\n", configPath)
-				return err
-			}
-			if err := cmd.Flags().Set("config", configPath); err != nil {
-				fmt.Fprintf(iostream.ErrOut, "failed to set config flag: %s\n", err)
-				return err
-			}
-			// Prompt for force flag
-			forcePrompt := &survey.Confirm{
-				Message: "Do you want to force overwrite existing configs?",
-				Default: false,
-			}
-			if err := survey.AskOne(forcePrompt, &force); err != nil {
-				return os.ErrExist
-			}
-			config, err := utils.LoadToolsConfig(configFile)
-			if err != nil {
-				fmt.Fprintf(iostream.ErrOut, cs.Red("Error loading configuration: %v\n"), err)
-				return utils.ConfigNotFoundError
-			}
-
-			if force {
-				if err := cmd.Flags().Set("force", "true"); err != nil {
-					fmt.Fprintf(iostream.ErrOut, "failed to set force flag: %s\n", err)
+				// Get the absolute path
+				absPath, err := filepath.Abs(configPath)
+				if err == nil {
+					configPath = absPath
+				}
+				fmt.Println(configPath)
+				// Validate the file path
+				if _, err := os.Stat(configPath); os.IsNotExist(err) {
+					fmt.Fprintf(iostream.ErrOut, "Error: Config file does not exist at path: %s\n", configPath)
 					return err
 				}
-			}
 
-			return ConfigureToolsFromConfig(iostream, config, ctx, force)
+				config, err := utils.LoadToolsConfig(configFile)
+				if err != nil {
+					return err
+				}
+				if force {
+					if err := cmd.Flags().Set("force", "true"); err != nil {
+						fmt.Fprintf(iostream.ErrOut, "failed to set force flag: %s\n", err)
+						return err
+					}
+
+				}
+
+				return ConfigureToolsFromConfig(iostream, config, ctx, force)
+			} else {
+				// Prompt for config file path
+				configPrompt := &survey.Input{
+					Message: "Enter the path to the config file:",
+					Default: "config.yaml",
+				}
+				if err := survey.AskOne(configPrompt, &configPath); err != nil {
+					return os.ErrExist
+				}
+				configPath = os.ExpandEnv(configPath)
+				// Replace ~ with home directory
+				if strings.HasPrefix(configPath, "~") {
+					home, err := os.UserHomeDir()
+					if err == nil {
+						configPath = filepath.Join(home, configPath[1:])
+					}
+				}
+
+				// Get the absolute path
+				absPath, err := filepath.Abs(configPath)
+				if err == nil {
+					configPath = absPath
+				}
+				fmt.Println(configPath)
+				// Validate the file path
+				if _, err := os.Stat(configPath); os.IsNotExist(err) {
+					fmt.Fprintf(iostream.ErrOut, "Error: Config file does not exist at path: %s\n", configPath)
+					return err
+				}
+				if err := cmd.Flags().Set("config", configPath); err != nil {
+					fmt.Fprintf(iostream.ErrOut, "failed to set config flag: %s\n", err)
+					return err
+				}
+				// Prompt for force flag
+				forcePrompt := &survey.Confirm{
+					Message: "Do you want to force overwrite existing configs?",
+					Default: false,
+				}
+				if err := survey.AskOne(forcePrompt, &force); err != nil {
+					return os.ErrExist
+				}
+				config, err := utils.LoadToolsConfig(configFile)
+				if err != nil {
+					fmt.Fprintf(iostream.ErrOut, cs.Red("Error loading configuration: %v\n"), err)
+					return utils.ConfigNotFoundError
+				}
+
+				if force {
+					if err := cmd.Flags().Set("force", "true"); err != nil {
+						fmt.Fprintf(iostream.ErrOut, "failed to set force flag: %s\n", err)
+						return err
+					}
+				}
+				return ConfigureToolsFromConfig(iostream, config, ctx, force)
+			}
 		},
 	}
 
@@ -212,9 +253,15 @@ func expandTilde(path string) string {
 		// If it's something like ~user/test, don't expand it
 		return path
 	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return path
+	home := os.Getenv("HOME") // Use environment variable which is controlled in tests
+	fmt.Println(home)
+
+	if home == "" {
+		var err error
+		home, err = os.UserHomeDir()
+		if err != nil {
+			return path
+		}
 	}
 	return filepath.Join(home, path[1:])
 }

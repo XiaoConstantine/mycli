@@ -22,15 +22,17 @@ type NoOpLogger struct{}
 
 func (l NoOpLogger) Log(msg string) {}
 
-type exitCode int
+type ExitCode int
 
 const (
-	exitOK      exitCode = 0
-	exitError   exitCode = 1
-	exitCancel  exitCode = 2
-	exitAuth    exitCode = 4
-	exitPending exitCode = 8
+	exitOK      ExitCode = 0
+	exitError   ExitCode = 1
+	exitCancel  ExitCode = 2
+	exitAuth    ExitCode = 4
+	exitPending ExitCode = 8
 )
+
+var nonInteractive bool
 
 func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 	cs := iostream.ColorScheme()
@@ -60,10 +62,12 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 	rootCmd.AddCommand(installCmd)
 	rootCmd.AddCommand(configureCmd)
 	rootCmd.PersistentFlags().Bool("help", false, "Show help for command")
+	rootCmd.PersistentFlags().BoolVar(&nonInteractive, "non-interactive", false, "Run in non-interactive mode")
+
 	return rootCmd, nil
 }
 
-func Run() exitCode {
+func Run(args []string) ExitCode {
 	iostream := iostreams.System()
 	stderr := iostream.ErrOut
 	ctx := context.Background()
@@ -94,32 +98,41 @@ func Run() exitCode {
 		options = append(options, cmd.Use)
 	}
 
-	// Prompt user to select a command
-	var selectedOption string
-	prompt := &survey.Select{
-		Message: "Choose a command to run:",
-		Options: options,
-	}
-	if err := survey.AskOne(prompt, &selectedOption); err != nil {
-		fmt.Fprintf(stderr, "failed to select a command: %s\n", err)
-		return exitError
+	rootCmd.SetArgs(args)
+	fmt.Println(args[0])
+	// Hack: Check for non-interactive mode
+	if args[0] == "--non-interactive" {
+		nonInteractive = true
 	}
 
-	// Confirm if user wants to run the install command
-	var confirm bool
-	confirmPrompt := &survey.Confirm{
-		Message: fmt.Sprintf("Do you want to run the '%s' command?", selectedOption),
-	}
-	if err := survey.AskOne(confirmPrompt, &confirm); err != nil {
-		fmt.Fprintf(stderr, "failed to confirm the command: %s\n", err)
-		return exitError
-	}
+	if !nonInteractive {
+		// Prompt user to select a command
+		var selectedOption string
+		prompt := &survey.Select{
+			Message: "Choose a command to run:",
+			Options: options,
+		}
+		if err := survey.AskOne(prompt, &selectedOption); err != nil {
+			fmt.Fprintf(stderr, "failed to select a command: %s\n", err)
+			return exitError
+		}
 
-	if !confirm {
-		fmt.Println("Operation cancelled by user.")
-		return exitOK
+		// Confirm if user wants to run the install command
+		var confirm bool
+		confirmPrompt := &survey.Confirm{
+			Message: fmt.Sprintf("Do you want to run the '%s' command?", selectedOption),
+		}
+		if err := survey.AskOne(confirmPrompt, &confirm); err != nil {
+			fmt.Fprintf(stderr, "failed to confirm the command: %s\n", err)
+			return exitError
+		}
+
+		if !confirm {
+			fmt.Println("Operation cancelled by user.")
+			return exitOK
+		}
+		rootCmd.SetArgs([]string{selectedOption})
 	}
-	rootCmd.SetArgs([]string{selectedOption})
 	if err != nil {
 		fmt.Fprintf(stderr, "failed to create root command: %s\n", err)
 		return exitError

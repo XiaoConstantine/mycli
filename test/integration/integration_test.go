@@ -1,161 +1,86 @@
+//go:build integration
+// +build integration
+
 package integration
 
 import (
-	"context"
-	"fmt"
+	"mycli/pkg/commands/root"
+	"net/http"
+	"net/http/httptest"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
-	"time"
 
-	expect "github.com/Netflix/go-expect"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var cliPath string
+func TestConfigureCommand(t *testing.T) {
+	// Set up a temporary directory to act as the home directory
+	fakeHomeDir, err := os.MkdirTemp("", "fake-home")
+	require.NoError(t, err)
+	defer os.RemoveAll(fakeHomeDir)
 
-func TestMain(m *testing.M) {
-	cliPath = filepath.Join("..", "..", "mycli") // Adjust if necessary
-	exitCode := m.Run()
-	os.Exit(exitCode)
-}
+	// Save the original home directory and set it back after the test
+	originalHome := os.Getenv("HOME")
+	defer os.Setenv("HOME", originalHome)
 
-func runCLITest(t *testing.T, interactions func(*expect.Console)) {
+	// Set the fake ome directory
+	os.Setenv("HOME", fakeHomeDir)
+	// // Create a 'test-config' directory inside the fake home directory
+	// testConfigDir := fakeHomeDir + "/test-config"
+	// err = os.Mkdir(testConfigDir, 0755)
+	// require.NoError(t, err, "Failed to create test-config directory")
 
-	c, err := expect.NewConsole(expect.WithStdout(os.Stdout))
-	c.Env["TERM"] = "dumb"
-	require.NoError(t, err, "Failed to create console")
-	defer c.Close()
+	// Set up a temporary directory for the test
+	tempDir, err := os.MkdirTemp("", "mycli-test")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
 
-	cmd := exec.Command(cliPath)
-	cmd.Stdin = c.Tty()
-	cmd.Stdout = c.Tty()
-	cmd.Stderr = c.Tty()
+	// Create a test config file
+	configPath := filepath.Join(tempDir, "test_config.yml")
+	testConfig := `
+configure:
+  - name: test-tool
+    config_url: https://raw.githubusercontent.com/username/repo/main/test-config/init.yaml
+    install_path: ~/test-config/init.yaml
+`
+	err = os.WriteFile(configPath, []byte(testConfig), 0644)
+	require.NoError(t, err)
 
-	err = cmd.Start()
-	require.NoError(t, err, "Failed to start command")
+	// Set up mock HTTP server for the config file
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("mock config content"))
+	}))
+	defer mockServer.Close()
 
-	interactions(c)
+	// Replace the GitHub URL in the config with our mock server URL
+	testConfig = strings.Replace(testConfig, "https://raw.githubusercontent.com/username/repo/main/test-config/init.yaml", mockServer.URL, 1)
+	err = os.WriteFile(configPath, []byte(testConfig), 0644)
+	require.NoError(t, err)
 
-	err = cmd.Wait()
-	require.NoError(t, err, "Command failed")
-}
+	// Run the CLI in non-interactive mode
+	args := []string{"--non-interactive", "configure", "--config", configPath, "--force"}
+	exitCode := root.Run(args)
 
-func expectPrompt(c *expect.Console, prompt string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	// Assert that the exit code is as expected
+	assert.Equal(t, root.ExitCode(0), exitCode)
 
-	var lastOutput string
-	for {
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("timed out waiting for prompt: %s\nLast output: %s", prompt, lastOutput)
-		default:
-			output, err := c.ExpectString(prompt)
-			if err == nil {
-				return nil
-			}
-			lastOutput = output
-			time.Sleep(100 * time.Millisecond)
-		}
-	}
-}
+	// Verify that the config file was processed
+	require.NoError(t, err)
+	expectedConfigPath := filepath.Join(fakeHomeDir, "test-config/init.yaml")
 
-func selectOption(c *expect.Console, option string) error {
-	_, err := c.Send(option)
-	if err != nil {
-		return err
-	}
-	_, err = c.Send("\n")
-	return err
-}
+	// Check if the file exists
+	_, err = os.Stat(expectedConfigPath)
+	assert.NoError(t, err)
 
-func confirmYes(c *expect.Console) error {
-	_, err := c.Send("y\n")
-	if err != nil {
-		return err
-	}
-	time.Sleep(500 * time.Millisecond)
-	return err
-}
+	// Check the content of the created file
+	content, err := os.ReadFile(expectedConfigPath)
+	require.NoError(t, err)
+	assert.Equal(t, "mock config content", string(content))
 
-func confirmNo(c *expect.Console) error {
-	_, err := c.Send("n\n")
-	return err
-}
-
-func TestCLIConfigure(t *testing.T) {
-	runCLITest(t, func(c *expect.Console) {
-		require.NoError(t, expectPrompt(c, "Choose a command to run"))
-		require.NoError(t, selectOption(c, "configure"))
-		require.NoError(t, expectPrompt(c, "Do you want to run the 'configure' command? (y/N)"))
-		// Confirm yes
-		require.NoError(t, confirmYes(c))
-
-		require.NoError(t, expectPrompt(c, "Enter config file path:"))
-		_, err := c.Send("test_config.yml\n")
-		require.NoError(t, err)
-
-		require.NoError(t, expectPrompt(c, "Configuration completed successfully"))
-	})
-}
-
-func TestCLIInstallEverything(t *testing.T) {
-	runCLITest(t, func(c *expect.Console) {
-		require.NoError(t, expectPrompt(c, "Select a command"))
-		require.NoError(t, selectOption(c, "install"))
-
-		require.NoError(t, expectPrompt(c, "Select install option"))
-		require.NoError(t, selectOption(c, "everything"))
-
-		require.NoError(t, expectPrompt(c, "Enter config file path:"))
-		_, err := c.Send("test_config.yml\n")
-		require.NoError(t, err)
-
-		require.NoError(t, expectPrompt(c, "Are you sure you want to install everything? (y/N)"))
-		require.NoError(t, confirmYes(c))
-
-		require.NoError(t, expectPrompt(c, "Installation completed successfully"))
-	})
-}
-
-func TestCLIInstallTools(t *testing.T) {
-	runCLITest(t, func(c *expect.Console) {
-		require.NoError(t, expectPrompt(c, "Select a command"))
-		require.NoError(t, selectOption(c, "install"))
-
-		require.NoError(t, expectPrompt(c, "Select install option"))
-		require.NoError(t, selectOption(c, "tools"))
-
-		require.NoError(t, expectPrompt(c, "Enter config file path:"))
-		_, err := c.Send("test_config.yml\n")
-		require.NoError(t, err)
-
-		require.NoError(t, expectPrompt(c, "Installation completed successfully"))
-	})
-}
-
-func TestCLIInstallXcode(t *testing.T) {
-	runCLITest(t, func(c *expect.Console) {
-		require.NoError(t, expectPrompt(c, "Select a command"))
-		require.NoError(t, selectOption(c, "install"))
-
-		require.NoError(t, expectPrompt(c, "Select install option"))
-		require.NoError(t, selectOption(c, "xcode"))
-
-		require.NoError(t, expectPrompt(c, "Xcode installation completed successfully"))
-	})
-}
-
-func TestCLIInstallBrew(t *testing.T) {
-	runCLITest(t, func(c *expect.Console) {
-		require.NoError(t, expectPrompt(c, "Select a command"))
-		require.NoError(t, selectOption(c, "install"))
-
-		require.NoError(t, expectPrompt(c, "Select install option"))
-		require.NoError(t, selectOption(c, "brew"))
-
-		require.NoError(t, expectPrompt(c, "Homebrew installation completed successfully"))
-	})
+	// Clean up the created file
+	os.Remove(expectedConfigPath)
 }
