@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -28,11 +29,6 @@ func TestConfigureCommand(t *testing.T) {
 
 	// Set the fake ome directory
 	os.Setenv("HOME", fakeHomeDir)
-	// // Create a 'test-config' directory inside the fake home directory
-	// testConfigDir := fakeHomeDir + "/test-config"
-	// err = os.Mkdir(testConfigDir, 0755)
-	// require.NoError(t, err, "Failed to create test-config directory")
-
 	// Set up a temporary directory for the test
 	tempDir, err := os.MkdirTemp("", "mycli-test")
 	require.NoError(t, err)
@@ -121,7 +117,6 @@ tools:
 
 		// Check if Homebrew is installed
 		// This is a simple check and might need to be adjusted based on your actual installation process
-		// _, err := os.Stat("/usr/local/bin/brew")
 		_, err := os.Stat("/opt/homebrew/bin/brew")
 
 		assert.NoError(t, err, "Homebrew was not installed")
@@ -138,39 +133,35 @@ tools:
 		_, err := os.Stat("/Applications/Xcode.app")
 		assert.NoError(t, err, "Xcode was not installed")
 	})
+	// Add tests for tools installation
+	t.Run("Install Tools", func(t *testing.T) {
+		// Create a temporary config file
+		configContent := `
+tools:
+  - name: wget
+`
+		tmpfile, err := os.CreateTemp("", "test_config*.yaml")
+		require.NoError(t, err)
+		defer os.Remove(tmpfile.Name())
 
-	// Test install tools
-	// t.Run("Install Tools", func(t *testing.T) {
-	// 	args := []string{"--non-interactive", "install", "tools", "--config", configPath, "--force"}
-	// 	exitCode := root.Run(args)
-	// 	assert.Equal(t, root.ExitCode(0), exitCode)
+		_, err = tmpfile.Write([]byte(configContent))
+		require.NoError(t, err)
+		tmpfile.Close()
 
-	// 	// Check if the test-tool was installed
-	// 	// This is a simple check and might need to be adjusted based on your actual installation process
-	// 	expectedToolDir := filepath.Join(fakeHomeDir, "test-tool")
-	// 	_, err := os.Stat(expectedToolDir)
-	// 	assert.NoError(t, err, "Expected tool directory was not created")
-	// })
+		args := []string{"--non-interactive", "install", "tools", "--config", tmpfile.Name()}
+		exitCode := root.Run(args)
+		assert.Equal(t, root.ExitCode(0), exitCode)
+		// Verify tool is installed
+		wgetPath := "/opt/homebrew/bin/wget"
+		_, err = os.Stat(wgetPath)
+		assert.NoError(t, err, "Tool 'wget' not found at expected location")
 
-	// // Test install everything
-	// t.Run("Install Everything", func(t *testing.T) {
-	// 	args := []string{"--non-interactive", "install", "--config", configPath, "--force"}
-	// 	exitCode := root.Run(args)
-	// 	assert.Equal(t, root.ExitCode(0), exitCode)
+		// Test the installed tool
+		cmd := exec.Command(wgetPath, "--version")
+		err = cmd.Run()
+		assert.NoError(t, err, "Failed to run 'wget --version'")
 
-	// 	// Check if Homebrew is installed
-	// 	_, err := os.Stat("/opt/homebrew/bin/brew")
-	// 	assert.NoError(t, err, "Homebrew was not installed")
-
-	// 	// Check if Xcode is installed
-	// 	_, err = os.Stat("/Applications/Xcode.app")
-	// 	assert.NoError(t, err, "Xcode was not installed")
-
-	// 	// Check if the test-tool was installed
-	// 	expectedToolDir := filepath.Join(fakeHomeDir, "test-tool")
-	// 	_, err = os.Stat(expectedToolDir)
-	// 	assert.NoError(t, err, "Expected tool directory was not created")
-	// })
+	})
 
 	// Clean up any created files or directories
 	os.RemoveAll(filepath.Join(fakeHomeDir, "test-tool"))
