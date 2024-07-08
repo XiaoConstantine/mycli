@@ -3,11 +3,12 @@ package homebrew
 import (
 	"context"
 	"fmt"
-	"mycli/pkg/iostreams"
-	"mycli/pkg/utils"
 	"os"
 	"os/exec"
 	"time"
+
+	"github.com/XiaoConstantinue/mycli/pkg/iostreams"
+	"github.com/XiaoConstantinue/mycli/pkg/utils"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"

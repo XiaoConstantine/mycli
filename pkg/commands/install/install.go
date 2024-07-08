@@ -2,13 +2,14 @@ package install
 
 import (
 	"fmt"
-	"mycli/pkg/commands/install/homebrew"
-	"mycli/pkg/commands/install/xcode"
-	"mycli/pkg/iostreams"
-	"mycli/pkg/utils"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/XiaoConstantinue/mycli/pkg/commands/install/homebrew"
+	"github.com/XiaoConstantinue/mycli/pkg/commands/install/xcode"
+	"github.com/XiaoConstantinue/mycli/pkg/iostreams"
+	"github.com/XiaoConstantinue/mycli/pkg/utils"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"

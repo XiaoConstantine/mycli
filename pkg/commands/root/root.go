@@ -7,10 +7,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"mycli/pkg/commands/configure"
-	"mycli/pkg/commands/install"
-	"mycli/pkg/iostreams"
-	"mycli/pkg/utils"
+
+	"github.com/XiaoConstantinue/mycli/pkg/commands/install"
+	"github.com/XiaoConstantinue/mycli/pkg/iostreams"
+	"github.com/XiaoConstantinue/mycli/pkg/utils"
+
+	"github.com/XiaoConstantinue/mycli/pkg/commands/configure"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"

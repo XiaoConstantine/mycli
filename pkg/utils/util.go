@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"mycli/pkg/iostreams"
 	"net/url"
 	"os"
 	"os/exec"
 	"os/user"
 	"strings"
 	"time"
+
+	"github.com/XiaoConstantinue/mycli/pkg/iostreams"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"

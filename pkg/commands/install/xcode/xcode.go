@@ -3,10 +3,11 @@ package xcode
 import (
 	"context"
 	"fmt"
-	"mycli/pkg/iostreams"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/XiaoConstantinue/mycli/pkg/iostreams"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
