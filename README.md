@@ -4,6 +4,8 @@
 [![Release](https://github.com/XiaoConstantine/mycli/actions/workflows/release.yml/badge.svg)](https://github.com/XiaoConstantine/mycli/actions/workflows/release.yml)
 [![Lint](https://github.com/XiaoConstantine/mycli/actions/workflows/lint.yml/badge.svg)](https://github.com/XiaoConstantine/mycli/actions/workflows/lint.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/XiaoConstantine/mycli)](https://goreportcard.com/report/github.com/XiaoConstantine/mycli)
+[![codecov](https://codecov.io/gh/XiaoConstantine/mycli/graph/badge.svg?token=XL61J6R9T1)](https://codecov.io/gh/XiaoConstantine/mycli)
+
 
 `mycli` is a Cobra-based CLI tool designed to bootstrap macOS machines with a focus on observability and efficiency, influenced by the design of the GitHub CLI.
 
