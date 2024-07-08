@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestStopAlternateScreenBuffer(t *testing.T) {
@@ -59,4 +61,180 @@ func TestHelperProcess(t *testing.T) {
 		os.Exit(1)
 	}
 	os.Exit(0)
+}
+
+func TestColorEnabled(t *testing.T) {
+	ios, _, _, _ := Test()
+	assert.False(t, ios.ColorEnabled())
+
+	ios.SetColorEnabled(true)
+	assert.True(t, ios.ColorEnabled())
+}
+
+func TestColorSupport256(t *testing.T) {
+	ios, _, _, _ := Test()
+	assert.False(t, ios.ColorSupport256())
+
+	ios.SetColorEnabled(true)
+	assert.True(t, ios.ColorSupport256())
+}
+
+func TestHasTrueColor(t *testing.T) {
+	ios, _, _, _ := Test()
+	assert.False(t, ios.HasTrueColor())
+
+	ios.SetColorEnabled(true)
+	assert.True(t, ios.HasTrueColor())
+}
+
+func TestDetectTerminalTheme(t *testing.T) {
+	ios, _, _, _ := Test()
+	ios.DetectTerminalTheme()
+	assert.Equal(t, "none", ios.TerminalTheme())
+}
+
+func TestIsStdinTTY(t *testing.T) {
+	ios, _, _, _ := Test()
+	assert.False(t, ios.IsStdinTTY())
+
+	ios.SetStdinTTY(true)
+	assert.True(t, ios.IsStdinTTY())
+}
+
+func TestIsStdoutTTY(t *testing.T) {
+	ios, _, _, _ := Test()
+	assert.False(t, ios.IsStdoutTTY())
+
+	ios.SetStdoutTTY(true)
+	assert.True(t, ios.IsStdoutTTY())
+}
+
+func TestIsStderrTTY(t *testing.T) {
+	ios, _, _, _ := Test()
+	assert.False(t, ios.IsStderrTTY())
+
+	ios.SetStderrTTY(true)
+	assert.True(t, ios.IsStderrTTY())
+}
+
+func TestSetPager(t *testing.T) {
+	ios, _, _, _ := Test()
+	pager := "less"
+	ios.SetPager(pager)
+	assert.Equal(t, pager, ios.GetPager())
+}
+
+func TestCanPrompt(t *testing.T) {
+	ios, _, _, _ := Test()
+	assert.False(t, ios.CanPrompt())
+
+	ios.SetStdinTTY(true)
+	ios.SetStdoutTTY(true)
+	assert.True(t, ios.CanPrompt())
+
+	ios.SetNeverPrompt(true)
+	assert.False(t, ios.CanPrompt())
+}
+
+func TestStartStopProgressIndicator(t *testing.T) {
+	ios, _, _, _ := Test()
+	ios.progressIndicatorEnabled = true
+
+	ios.StartProgressIndicator()
+	assert.NotNil(t, ios.progressIndicator)
+
+	ios.StopProgressIndicator()
+	assert.Nil(t, ios.progressIndicator)
+}
+
+func TestRunWithProgress(t *testing.T) {
+	ios, _, _, _ := Test()
+	ios.progressIndicatorEnabled = true
+
+	err := ios.RunWithProgress("Test", func() error {
+		return nil
+	})
+	assert.NoError(t, err)
+}
+
+func TestStartStopAlternateScreenBuffer(t *testing.T) {
+	ios, _, stdout, _ := Test()
+	ios.SetAlternateScreenBufferEnabled(true)
+
+	ios.StartAlternateScreenBuffer()
+	ios.StopAlternateScreenBuffer()
+
+	expected := "\x1b[?1049h\x1b[?1049l"
+	assert.Equal(t, expected, stdout.String())
+}
+
+func TestRefreshScreen(t *testing.T) {
+	ios, _, stdout, _ := Test()
+	ios.SetStdoutTTY(true)
+
+	ios.RefreshScreen()
+
+	expected := "\x1b[0;0H\x1b[J"
+	assert.Equal(t, expected, stdout.String())
+}
+
+func TestTerminalWidth(t *testing.T) {
+	ios, _, _, _ := Test()
+	assert.Equal(t, DefaultWidth, ios.TerminalWidth())
+}
+
+func TestColorScheme(t *testing.T) {
+	ios, _, _, _ := Test()
+	scheme := ios.ColorScheme()
+	assert.NotNil(t, scheme)
+}
+
+func TestReadUserFile(t *testing.T) {
+	ios, in, _, _ := Test()
+
+	// Test reading from stdin
+	in.WriteString("test input")
+	content, err := ios.ReadUserFile("-")
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("test input"), content)
+
+	// Test reading from file
+	tmpfile, err := os.CreateTemp("", "test")
+	assert.NoError(t, err)
+	defer os.Remove(tmpfile.Name())
+
+	_, err = tmpfile.Write([]byte("file content"))
+	assert.NoError(t, err)
+	tmpfile.Close()
+
+	content, err = ios.ReadUserFile(tmpfile.Name())
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("file content"), content)
+}
+
+func TestTempFile(t *testing.T) {
+	ios, _, _, _ := Test()
+
+	file, err := ios.TempFile("", "test")
+	assert.NoError(t, err)
+	assert.NotNil(t, file)
+	defer os.Remove(file.Name())
+
+	// Test with TempFileOverride
+	override, err := os.CreateTemp("", "override")
+	assert.NoError(t, err)
+	defer os.Remove(override.Name())
+
+	ios.TempFileOverride = override
+	file, err = ios.TempFile("", "test")
+	assert.NoError(t, err)
+	assert.Equal(t, override, file)
+}
+
+func TestSystem(t *testing.T) {
+	ios := System()
+	assert.NotNil(t, ios)
+	assert.NotNil(t, ios.In)
+	assert.NotNil(t, ios.Out)
+	assert.NotNil(t, ios.ErrOut)
 }
