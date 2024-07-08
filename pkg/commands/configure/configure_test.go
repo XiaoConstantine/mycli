@@ -2,6 +2,7 @@ package configure
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -116,6 +117,16 @@ func TestConfigureTool(t *testing.T) {
 			force:       true,
 			expectError: false,
 		},
+		{
+			name: "Execute command success",
+			item: utils.ConfigureItem{
+				Name:             "TestCLI",
+				InstallPath:      filepath.Join(tempDir, "cli_config.yaml"),
+				ConfigureCommand: fmt.Sprintf("touch %s", filepath.Join(tempDir, "cli_config.yaml")),
+			},
+			force:       false,
+			expectError: false,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -136,7 +147,11 @@ func TestConfigureTool(t *testing.T) {
 				// Check if the file was created and has the correct content
 				content, err := os.ReadFile(tc.item.InstallPath)
 				require.NoError(t, err)
-				assert.Equal(t, "test configuration content", string(content))
+				if tc.name == "Execute command success" {
+					assert.Equal(t, "", string(content))
+				} else {
+					assert.Equal(t, "test configuration content", string(content))
+				}
 			}
 		})
 	}

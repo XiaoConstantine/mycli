@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -202,48 +203,12 @@ func configureTool(item utils.ConfigureItem, ctx context.Context, force bool) er
 	if err != nil {
 		return fmt.Errorf("failed to create directory: %v", err)
 	}
-	// Convert URL if it's a GitHub URL
-	convertedURL, err := utils.ConvertToRawGitHubURL(item.ConfigURL)
-	if err != nil {
-		return fmt.Errorf("error converting URL: %v", err)
-	}
-	item.ConfigURL = convertedURL
-	// Validate the URL
-	parsedURL, err := url.Parse(item.ConfigURL)
-	fmt.Println(parsedURL)
-	if err != nil {
-		return fmt.Errorf("invalid configuration URL: %v", err)
-	}
 
-	if parsedURL.Scheme == "" {
-		return fmt.Errorf("URL scheme is missing. Please provide a complete URL including http:// or https://")
+	if item.ConfigureCommand != "" {
+		return executeConfigureCommand(ctx, item.ConfigureCommand, installPath)
+	} else {
+		return downloadAndSaveConfig(item.ConfigURL, installPath)
 	}
-
-	// Download the configuration file
-	resp, err := http.Get(item.ConfigURL)
-	if err != nil {
-		return fmt.Errorf("failed to download configuration: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to download configuration: HTTP status %d", resp.StatusCode)
-	}
-
-	// Create the configuration file
-	out, err := os.Create(installPath)
-	if err != nil {
-		return fmt.Errorf("failed to create configuration file: %v", err)
-	}
-	defer out.Close()
-
-	// Write the content to the file
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to write configuration: %v", err)
-	}
-
-	return nil
 }
 
 func expandTilde(path string) string {
@@ -265,4 +230,61 @@ func expandTilde(path string) string {
 		}
 	}
 	return filepath.Join(home, path[1:])
+}
+
+func executeConfigureCommand(ctx context.Context, command string, installPath string) error {
+	parts := strings.Fields(command)
+	fmt.Println(parts)
+	cmd := exec.CommandContext(ctx, parts[0], parts[1:]...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to execute configure command: %v", err)
+	}
+
+	if _, err := os.Stat(installPath); os.IsNotExist(err) {
+		return fmt.Errorf("configure command executed, but config file not found at %s", installPath)
+	}
+
+	return nil
+}
+
+func downloadAndSaveConfig(configURL, installPath string) error {
+	convertedURL, err := utils.ConvertToRawGitHubURL(configURL)
+	if err != nil {
+		return fmt.Errorf("error converting URL: %v", err)
+	}
+
+	parsedURL, err := url.Parse(convertedURL)
+	if err != nil {
+		return fmt.Errorf("invalid configuration URL: %v", err)
+	}
+
+	if parsedURL.Scheme == "" {
+		return fmt.Errorf("URL scheme is missing. Please provide a complete URL including http:// or https://")
+	}
+
+	resp, err := http.Get(convertedURL)
+	if err != nil {
+		return fmt.Errorf("failed to download configuration: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to download configuration: HTTP status %d", resp.StatusCode)
+	}
+
+	out, err := os.Create(installPath)
+	if err != nil {
+		return fmt.Errorf("failed to create configuration file: %v", err)
+	}
+	defer out.Close()
+
+	if _, err = io.Copy(out, resp.Body); err != nil {
+		return fmt.Errorf("failed to write configuration: %v", err)
+	}
+
+	return nil
 }

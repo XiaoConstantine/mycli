@@ -49,9 +49,10 @@ type Tool struct {
 }
 
 type ConfigureItem struct {
-	Name        string `yaml:"name"`
-	ConfigURL   string `yaml:"config_url"`
-	InstallPath string `yaml:"install_path"`
+	Name             string `yaml:"name"`
+	ConfigURL        string `yaml:"config_url,omitempty"`
+	InstallPath      string `yaml:"install_path"`
+	ConfigureCommand string `yaml:"configure_command,omitempty"`
 }
 
 // LoadToolsConfig loads tool configuration from a YAML file.
