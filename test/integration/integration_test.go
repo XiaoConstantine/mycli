@@ -4,7 +4,6 @@
 package integration
 
 import (
-	"mycli/pkg/commands/root"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -12,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/XiaoConstantine/mycli/pkg/commands/root"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
