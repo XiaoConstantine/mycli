@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"golang.org/x/sys/unix"
 )
 
 func TestGetConfigureItem(t *testing.T) {
@@ -207,13 +206,6 @@ func TestPrintWelcomeMessage(t *testing.T) {
 	assert.Contains(t, out.String(), "Welcome to MyCLI!")
 	assert.Contains(t, out.String(), "Your personal machine bootstrapping tool")
 	assert.Contains(t, out.String(), "Available commands:")
-}
-
-// Mock for unix.Uname
-func mockUname(uts *unix.Utsname) error {
-	copy(uts.Sysname[:], []byte("MockOS"))
-	copy(uts.Release[:], []byte("1.0"))
-	return nil
 }
 
 func TestGetOsInfoWithMock(t *testing.T) {
