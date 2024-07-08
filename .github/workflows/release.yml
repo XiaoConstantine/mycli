@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - "v*-*-*"
 
 permissions:
   contents: write
@@ -26,6 +26,6 @@ jobs:
         with:
           distribution: goreleaser
           version: latest
-          args: release
+          args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

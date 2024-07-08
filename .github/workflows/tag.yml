@@ -1,0 +1,45 @@
+name: Automated RC Tagging
+
+on:
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+  schedule:
+    - "0 0 * * *"
+  push:
+    branches:
+      - main # Adjust this as necessary, e.g., after merging a PR to your main branch
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # Fetch all history for all tags
+
+      - name: Install Git
+        run: sudo apt-get install git -y
+
+      - name: Determine New Tag
+        id: newtag
+        run: |
+          DATE=$(date +'%Y-%m-%d')
+          PREFIX="v${DATE}-rc"
+          # Fetch all tags, filter relevant, sort, and get the last one
+          LAST_TAG=$(git tag --list "${PREFIX}*" | sort -V | tail -n1)
+          if [[ -z "$LAST_TAG" ]]; then
+            NEW_TAG="${PREFIX}0"
+          else
+            LAST_RC_NUMBER=$(echo "$LAST_TAG" | grep -o -E 'rc[0-9]+$' | sed 's/rc//')
+            NEW_RC_NUMBER=$((LAST_RC_NUMBER + 1))
+            NEW_TAG="${PREFIX}${NEW_RC_NUMBER}"
+          fi
+          echo "New tag: $NEW_TAG"
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+
+      - name: Create and Push New Tag
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag ${{ env.NEW_TAG }}
+          git push origin ${{ env.NEW_TAG }}
