@@ -20,16 +20,28 @@ func TestEnableVirtualTerminalProcessing(t *testing.T) {
 }
 
 func TestOpenTTY(t *testing.T) {
-	// This test might not work on all systems, especially if /dev/tty is not available
 	f, err := openTTY()
 	if err != nil {
-		if !os.IsNotExist(err) {
+		// Check for specific error conditions
+		if os.IsNotExist(err) {
+			t.Skip("Skipping test: /dev/tty does not exist on this system")
+		} else if err.Error() == "device not configured" {
+			t.Skip("Skipping test: /dev/tty is not configured on this system")
+		} else {
 			t.Errorf("openTTY() unexpected error: %v", err)
 		}
 	} else {
 		defer f.Close()
 		if f == nil {
 			t.Error("openTTY() returned nil file without error")
+		} else {
+			// Optionally, perform additional checks on the file
+			info, err := f.Stat()
+			if err != nil {
+				t.Errorf("Failed to stat opened TTY: %v", err)
+			} else if (info.Mode() & os.ModeDevice) == 0 {
+				t.Error("Opened file is not a device")
+			}
 		}
 	}
 }
