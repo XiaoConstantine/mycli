@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/XiaoConstantinue/mycli/pkg/commands/install/homebrew"
-	"github.com/XiaoConstantinue/mycli/pkg/commands/install/xcode"
-	"github.com/XiaoConstantinue/mycli/pkg/iostreams"
-	"github.com/XiaoConstantinue/mycli/pkg/utils"
+	"github.com/XiaoConstantine/mycli/pkg/commands/install/homebrew"
+	"github.com/XiaoConstantine/mycli/pkg/commands/install/xcode"
+	"github.com/XiaoConstantine/mycli/pkg/iostreams"
+	"github.com/XiaoConstantine/mycli/pkg/utils"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"

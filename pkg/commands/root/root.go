@@ -8,11 +8,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/XiaoConstantinue/mycli/pkg/commands/install"
-	"github.com/XiaoConstantinue/mycli/pkg/iostreams"
-	"github.com/XiaoConstantinue/mycli/pkg/utils"
+	"github.com/XiaoConstantine/mycli/pkg/commands/install"
+	"github.com/XiaoConstantine/mycli/pkg/iostreams"
+	"github.com/XiaoConstantine/mycli/pkg/utils"
 
-	"github.com/XiaoConstantinue/mycli/pkg/commands/configure"
+	"github.com/XiaoConstantine/mycli/pkg/commands/configure"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"

@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/XiaoConstantinue/mycli/pkg/utils"
+	"github.com/XiaoConstantine/mycli/pkg/utils"
 
-	"github.com/XiaoConstantinue/mycli/pkg/iostreams"
+	"github.com/XiaoConstantine/mycli/pkg/iostreams"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/olekukonko/tablewriter"

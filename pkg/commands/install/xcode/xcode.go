@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/XiaoConstantinue/mycli/pkg/iostreams"
+	"github.com/XiaoConstantine/mycli/pkg/iostreams"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"

@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/XiaoConstantinue/mycli/pkg/iostreams"
-	"github.com/XiaoConstantinue/mycli/pkg/utils"
+	"github.com/XiaoConstantine/mycli/pkg/iostreams"
+	"github.com/XiaoConstantine/mycli/pkg/utils"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"

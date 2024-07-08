@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/XiaoConstantinue/mycli/pkg/iostreams"
+	"github.com/XiaoConstantine/mycli/pkg/iostreams"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"

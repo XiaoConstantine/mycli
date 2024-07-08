@@ -6,7 +6,7 @@ package main
 import (
 	"os"
 
-	"github.com/XiaoConstantinue/mycli/pkg/commands/root"
+	"github.com/XiaoConstantine/mycli/pkg/commands/root"
 )
 
 func main() {

@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	myTerm "github.com/XiaoConstantinue/mycli/pkg/term"
+	myTerm "github.com/XiaoConstantine/mycli/pkg/term"
 
 	"github.com/briandowns/spinner"
 	"github.com/cli/safeexec"
