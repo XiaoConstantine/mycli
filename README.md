@@ -9,7 +9,12 @@
 
 `mycli` is a Cobra-based CLI tool designed to bootstrap macOS machines with a focus on observability and efficiency, influenced by the design of the GitHub CLI.
 
+
 ## Introduction
+
+>[!IMPORTANT]
+>It's intentionally this only works for `macos` I m interested extend it to linux in the future
+
 
 `mycli` streamlines the setup of development environments on macOS, providing easy command-line access to install and configure essential software tools. It's built around three main command groups:
 
