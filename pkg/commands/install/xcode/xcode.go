@@ -13,6 +13,8 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
+var execCommandContext = exec.CommandContext
+
 // NewCmdXcode creates a new cobra.Command that installs Xcode on the user's system.
 // The command runs the "xcode-select --install" command, which prompts the user to install Xcode.
 // The command output and errors are forwarded to the user's terminal.
@@ -37,7 +39,7 @@ func NewCmdXcode(iostream *iostreams.IOStreams) *cobra.Command {
 				fmt.Println("Xcode is already installed.")
 				return nil // Early exit if Xcode is already installed
 			}
-			installCmd := exec.CommandContext(ctx, "xcode-select", "--install")
+			installCmd := execCommandContext(ctx, "xcode-select", "--install")
 
 			installCmd.Stdout = os.Stdout
 			installCmd.Stderr = os.Stderr
@@ -60,7 +62,7 @@ func NewCmdXcode(iostream *iostreams.IOStreams) *cobra.Command {
 
 // isXcodeAlreadyInstalled checks if Xcode is already installed by looking for its directory.
 func isXcodeAlreadyInstalled(ctx context.Context) bool {
-	cmd := exec.CommandContext(ctx, "xcode-select", "-p")
+	cmd := execCommandContext(ctx, "xcode-select", "-p")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return false // xcode-select command failed, likely Xcode not installed
