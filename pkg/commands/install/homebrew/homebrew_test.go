@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"testing"
 
-	"mycli/pkg/iostreams"
+	"github.com/XiaoConstantine/mycli/pkg/iostreams"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

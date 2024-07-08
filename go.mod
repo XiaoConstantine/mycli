@@ -1,4 +1,4 @@
-module mycli
+module github.com/XiaoConstantine/mycli
 
 go 1.21
 

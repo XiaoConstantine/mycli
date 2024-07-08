@@ -3,11 +3,13 @@ package homebrew
 import (
 	"context"
 	"fmt"
-	"mycli/pkg/iostreams"
-	"mycli/pkg/utils"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/XiaoConstantine/mycli/pkg/utils"
+
+	"github.com/XiaoConstantine/mycli/pkg/iostreams"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"

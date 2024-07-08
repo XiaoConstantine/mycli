@@ -8,8 +8,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"mycli/pkg/iostreams"
-	"mycli/pkg/utils"
+	"github.com/XiaoConstantine/mycli/pkg/utils"
+
+	"github.com/XiaoConstantine/mycli/pkg/iostreams"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
