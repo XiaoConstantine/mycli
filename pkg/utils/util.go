@@ -100,7 +100,7 @@ func GetOsInfo() map[string]string {
 
 func ConvertToRawGitHubURL(inputURL string) (string, error) {
 	parsedURL, err := url.Parse(inputURL)
-	if err != nil {
+	if err != nil || parsedURL.Scheme == "" || parsedURL.Host == "" {
 		return "", fmt.Errorf("invalid URL: %v", err)
 	}
 
