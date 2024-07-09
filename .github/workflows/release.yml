@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - "v*-*-*"
+  repository_dispatch:
+    types: [trigger-release]
 
 permissions:
   contents: write
@@ -21,6 +23,13 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+        if: github.event_name == 'push'
+      - name: Set version from dispatch
+        if: github.event_name == 'repository_dispatch'
+        run: echo ::set-output name=VERSION::${{ github.event.client_payload.tag }}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:

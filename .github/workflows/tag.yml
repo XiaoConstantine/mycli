@@ -43,3 +43,10 @@ jobs:
           git config user.email github-actions@github.com
           git tag ${{ env.NEW_TAG }}
           git push origin ${{ env.NEW_TAG }}
+
+      - name: Trigger Release Workflow
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          event-type: trigger-release
+          client-payload: '{"tag": "${{ env.NEW_TAG }}"}'
