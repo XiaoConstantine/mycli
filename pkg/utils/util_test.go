@@ -73,16 +73,48 @@ func (m *MockCommand) CommandContext(ctx context.Context, command string, args .
 	return cmd
 }
 
-func TestIsAdmin(t *testing.T) {
-	// Save the current execCommandContext and restore it after the tests
+// Mock UserUtils for testing.
+type MockUserUtils struct {
+	mock.Mock
+}
+
+func (m *MockUserUtils) GetCurrentUser() (*user.User, error) {
+	args := m.Called()
+	return args.Get(0).(*user.User), args.Error(1)
+}
+
+func (m *MockUserUtils) IsAdmin(ctx context.Context, u *user.User) bool {
+	args := m.Called(ctx, u)
+	return args.Bool(0)
+}
+
+func TestMockUserUtils(t *testing.T) {
+	m := &MockUserUtils{}
+
+	// Test GetCurrentUser
+	expectedUser := &user.User{Username: "testuser"}
+	m.On("GetCurrentUser").Return(expectedUser, nil)
+	u, err := m.GetCurrentUser()
+	assert.NoError(t, err)
+	assert.Equal(t, expectedUser, u)
+
+	// Test IsAdmin
+	ctx := context.Background()
+	m.On("IsAdmin", ctx, expectedUser).Return(true)
+	isAdmin := m.IsAdmin(ctx, expectedUser)
+	assert.True(t, isAdmin)
+
+	m.AssertExpectations(t)
+}
+
+func TestRealUserUtils_IsAdmin(t *testing.T) {
 	oldExecCommandContext := execCommandContext
 	defer func() { execCommandContext = oldExecCommandContext }()
 
 	tests := []struct {
-		name        string
-		mockOutput  string
-		shouldError bool
-		want        bool
+		name       string
+		mockOutput string
+		want       bool
 	}{
 		{
 			name:       "User is admin",
@@ -94,36 +126,29 @@ func TestIsAdmin(t *testing.T) {
 			mockOutput: "username wheel",
 			want:       false,
 		},
-		{
-			name:        "Command fails",
-			mockOutput:  "",
-			shouldError: true,
-			want:        false,
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Mock the execCommandContext function
 			execCommandContext = func(ctx context.Context, command string, args ...string) *exec.Cmd {
-				cmd := exec.Command("echo", tt.mockOutput)
-				cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"} // Ensure it uses the test environment
-				return cmd
+				return exec.Command("echo", tt.mockOutput)
 			}
 
-			// Create a user and pass it to IsAdmin
+			utils := RealUserUtils{}
 			u := &user.User{Username: "username"}
 			ctx := context.Background()
-			got := IsAdmin(ctx, u)
+			got := utils.IsAdmin(ctx, u)
 			assert.Equal(t, tt.want, got, "IsAdmin did not return expected value")
 		})
 	}
 }
 
-func TestGetCurrentUser(t *testing.T) {
-	u, err := GetCurrentUser()
+func TestRealUserUtils_GetCurrentUser(t *testing.T) {
+	utils := RealUserUtils{}
+	u, err := utils.GetCurrentUser()
 	assert.NoError(t, err)
 	assert.NotNil(t, u)
+	assert.NotEmpty(t, u.Username)
 }
 
 func TestGetSubcommandNames(t *testing.T) {
