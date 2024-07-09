@@ -44,6 +44,6 @@ release:
   github:
     owner: XiaoConstantine
     name: mycli
-  prerelease: auto
+  prerelease: "false"
 
 dist: clean
