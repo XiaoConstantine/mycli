@@ -2,6 +2,7 @@ package xcode
 
 import (
 	"context"
+	"errors"
 	"os/exec"
 	"testing"
 
@@ -74,6 +75,65 @@ func TestIsXcodeAlreadyInstalled(t *testing.T) {
 
 			if result != tt.expectedResult {
 				t.Errorf("Expected %v, got %v", tt.expectedResult, result)
+			}
+		})
+	}
+}
+
+func TestRunE(t *testing.T) {
+	oldExecCommandContext := execCommandContext
+	defer func() { execCommandContext = oldExecCommandContext }()
+
+	tests := []struct {
+		name           string
+		mockInstalled  bool
+		mockInstallErr error
+		expectError    bool
+	}{
+		{
+			name:           "Xcode already installed",
+			mockInstalled:  true,
+			mockInstallErr: nil,
+			expectError:    false,
+		},
+		{
+			name:           "Xcode not installed, installation succeeds",
+			mockInstalled:  false,
+			mockInstallErr: nil,
+			expectError:    false,
+		},
+		{
+			name:           "Xcode not installed, installation fails",
+			mockInstalled:  false,
+			mockInstallErr: errors.New("installation failed"),
+			expectError:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			execCommandContext = func(ctx context.Context, command string, args ...string) *exec.Cmd {
+				if command == "xcode-select" && args[0] == "-p" {
+					if tt.mockInstalled {
+						return exec.Command("echo", "/Applications/Xcode.app/Contents/Developer")
+					}
+					return exec.Command("false")
+				}
+				if command == "xcode-select" && args[0] == "--install" {
+					if tt.mockInstallErr != nil {
+						return exec.Command("false")
+					}
+					return exec.Command("true")
+				}
+				return exec.Command("echo", "unexpected command")
+			}
+
+			ios, _, _, _ := iostreams.Test()
+			cmd := NewCmdXcode(ios)
+			err := cmd.RunE(cmd, []string{})
+
+			if (err != nil) != tt.expectError {
+				t.Errorf("Expected error: %v, got: %v", tt.expectError, err)
 			}
 		})
 	}
