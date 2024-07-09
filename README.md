@@ -5,7 +5,7 @@
 [![Lint](https://github.com/XiaoConstantine/mycli/actions/workflows/lint.yml/badge.svg)](https://github.com/XiaoConstantine/mycli/actions/workflows/lint.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/XiaoConstantine/mycli)](https://goreportcard.com/report/github.com/XiaoConstantine/mycli)
 [![codecov](https://codecov.io/gh/XiaoConstantine/mycli/graph/badge.svg?token=XL61J6R9T1)](https://codecov.io/gh/XiaoConstantine/mycli)
-[![GitHub Release](https://img.shields.io/github/v/release/XiaoConstantine/mycli)]
+![GitHub Release](https://img.shields.io/github/v/release/XiaoConstantine/mycli)
 
 
 
