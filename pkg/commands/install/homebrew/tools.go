@@ -18,6 +18,7 @@ func NewInstallToolsCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	cs := iostream.ColorScheme()
 	var configFile string
 	var force bool
+	var nonInteractive bool
 
 	cmd := &cobra.Command{
 		Use:   "tools",
@@ -40,6 +41,7 @@ func NewInstallToolsCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	}
 	cmd.Flags().StringVarP(&configFile, "config", "c", "config.yaml", "Path to the configuration file")
 	cmd.Flags().BoolVarP(&force, "force", "f", false, "Force reinstall of casks")
+	cmd.Flags().BoolVar(&nonInteractive, "non-interactive", false, "Run in non-interactive mode")
 	return cmd
 }
 

@@ -65,12 +65,14 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 						fmt.Fprintf(iostream.ErrOut, "failed to set force flag: %s\n", err)
 						return err
 					}
-
 				}
 
 				fmt.Fprintln(iostream.Out, cs.GreenBold("Running all installation subcommands..."))
 				for _, subcmd := range cmd.Commands() {
 					fmt.Printf("Running installation for %s...\n", subcmd.Use)
+					if len(subcmd.Use) == 0 {
+						continue
+					}
 					subSpan, subCtx := tracer.StartSpanFromContext(ctx, "install_"+subcmd.Use)
 					subcmd.SetContext(subCtx)
 					if subcmd.Use == "tools" {
