@@ -47,7 +47,7 @@ func NewCmdXcode(iostream *iostreams.IOStreams) *cobra.Command {
 
 			err := installCmd.Run()
 			if err != nil {
-				// fmt.Printf("Failed to install xcode: %v\n", err)
+				fmt.Fprintf(iostream.ErrOut, "Failed to install xcode: %v\n", err)
 				span.SetTag("error", true)
 				span.Finish(tracer.WithError(err))
 				return err
