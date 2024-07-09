@@ -226,7 +226,8 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	}
 
 	installCmd.AddCommand(xcode.NewCmdXcode(iostream))
-	installCmd.AddCommand(homebrew.NewCmdHomeBrew(iostream))
+	utils := utils.RealUserUtils{}
+	installCmd.AddCommand(homebrew.NewCmdHomeBrew(iostream, utils))
 	installCmd.AddCommand(homebrew.NewInstallToolsCmd(iostream))
 
 	for _, subcmd := range installCmd.Commands() {

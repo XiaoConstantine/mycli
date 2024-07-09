@@ -20,14 +20,18 @@ import (
 
 var execCommandContext = exec.CommandContext
 
-func GetCurrentUser() (*user.User, error) {
+type UserUtils interface {
+	GetCurrentUser() (*user.User, error)
+	IsAdmin(ctx context.Context, u *user.User) bool
+}
+
+type RealUserUtils struct{}
+
+func (RealUserUtils) GetCurrentUser() (*user.User, error) {
 	return user.Current()
 }
 
-// isAdmin checks if the given user is a member of the "admin" group.
-// It uses the "groups" command to list the groups the user belongs to,
-// and returns true if the output contains the "admin" group.
-func IsAdmin(ctx context.Context, u *user.User) bool {
+func (RealUserUtils) IsAdmin(ctx context.Context, u *user.User) bool {
 	cmd := execCommandContext(ctx, "groups", u.Username)
 	output, err := cmd.Output()
 	if err != nil {
@@ -36,6 +40,23 @@ func IsAdmin(ctx context.Context, u *user.User) bool {
 	}
 	return strings.Contains(string(output), "admin")
 }
+
+// func GetCurrentUser() (*user.User, error) {
+// 	return user.Current()
+// }
+
+// isAdmin checks if the given user is a member of the "admin" group.
+// It uses the "groups" command to list the groups the user belongs to,
+// and returns true if the output contains the "admin" group.
+// func IsAdmin(ctx context.Context, u *user.User) bool {
+// 	cmd := execCommandContext(ctx, "groups", u.Username)
+// 	output, err := cmd.Output()
+// 	if err != nil {
+// 		fmt.Printf("Error checking groups: %v\n", err)
+// 		return false
+// 	}
+// 	return strings.Contains(string(output), "admin")
+// }
 
 type ToolConfig struct {
 	Tools     []Tool          `yaml:"tools"`
