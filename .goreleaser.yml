@@ -45,3 +45,5 @@ release:
     owner: XiaoConstantine
     name: mycli
   prerelease: auto
+
+dist: clean
