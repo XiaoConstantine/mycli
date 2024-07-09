@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"time"
 
 	"github.com/XiaoConstantine/mycli/pkg/iostreams"
@@ -75,7 +74,7 @@ func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolCon
 			if force {
 				command += " --force"
 			}
-			fmt.Printf("Installing %s using Homebrew with %s...\n", tool.Name, command)
+			fmt.Fprintf(iostream.Out, "Installing %s using Homebrew with %s...\n", tool.Name, command)
 			if err := executeCommand(fmt.Sprintf("%s %s", command, tool.Name), toolCtx); err != nil {
 				toolSpan.SetTag("status", "failed")
 				toolSpan.SetTag("error", err)
@@ -103,7 +102,7 @@ func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolCon
 }
 
 func executeCommand(command string, ctx context.Context) error {
-	cmd := exec.CommandContext(ctx, "sh", "-c", command)
+	cmd := execCommandContext(ctx, "sh", "-c", command)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
