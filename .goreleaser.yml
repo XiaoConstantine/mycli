@@ -10,12 +10,15 @@ builds:
       - arm64
     main: ./cmd/main.go
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+      - -s -w
+      - -X github.com/XiaoConstantine/mycli/pkg/build.Version={{.Version}}
+      - -X github.com/XiaoConstantine/mycli/pkg/build.Commit={{.ShortCommit}}
+      - -X github.com/XiaoConstantine/mycli/pkg/build.Date={{.Date}}
 
 archives:
   - format: tar.gz
     name_template: >-
-      {{ .ProjectName }}_v
+      {{ .ProjectName }}_
       {{- .Version }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
@@ -29,7 +32,7 @@ checksum:
   name_template: "checksums.txt"
 
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  name_template: "{{ incpatch .Version }}-next"
 
 changelog:
   sort: asc
@@ -44,6 +47,6 @@ release:
   github:
     owner: XiaoConstantine
     name: mycli
-  prerelease: "false"
+  prerelease: auto
 
 dist: clean

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"strconv"
 	"strings"
 	"time"
 
@@ -210,4 +211,62 @@ func PrintWelcomeMessage(iostream *iostreams.IOStreams) {
 	fmt.Fprintln(out, "")
 	fmt.Fprintln(out, "Let's get started with setting up your machine...")
 	fmt.Fprintln(out, "")
+}
+
+// CompareVersions compares two version strings.
+// It returns:
+//
+//	-1 if v1 < v2
+//	 0 if v1 == v2
+//	 1 if v1 > v2
+func CompareVersions(v1, v2 string) int {
+	v1Parts := strings.Split(strings.TrimPrefix(v1, "v"), ".")
+	v2Parts := strings.Split(strings.TrimPrefix(v2, "v"), ".")
+
+	for i := 0; i < len(v1Parts) && i < len(v2Parts); i++ {
+		v1Part := strings.Split(v1Parts[i], "-")
+		v2Part := strings.Split(v2Parts[i], "-")
+
+		n1, err1 := strconv.Atoi(v1Part[0])
+		n2, err2 := strconv.Atoi(v2Part[0])
+
+		if err1 != nil || err2 != nil {
+			// If we can't convert to integers, compare as strings
+			if v1Part[0] < v2Part[0] {
+				return -1
+			} else if v1Part[0] > v2Part[0] {
+				return 1
+			}
+		} else {
+			if n1 < n2 {
+				return -1
+			} else if n1 > n2 {
+				return 1
+			}
+		}
+
+		// If the numeric parts are equal, but one has a pre-release version, it's considered lower
+		if len(v1Part) == 1 && len(v2Part) > 1 {
+			return 1
+		} else if len(v1Part) > 1 && len(v2Part) == 1 {
+			return -1
+		} else if len(v1Part) > 1 && len(v2Part) > 1 {
+			// If both have pre-release versions, compare them
+			if v1Part[1] < v2Part[1] {
+				return -1
+			} else if v1Part[1] > v2Part[1] {
+				return 1
+			}
+		}
+	}
+
+	// If we've gotten this far and haven't returned, check for different lengths
+	if len(v1Parts) < len(v2Parts) {
+		return -1
+	} else if len(v1Parts) > len(v2Parts) {
+		return 1
+	}
+
+	// Versions are equal
+	return 0
 }
