@@ -149,12 +149,6 @@ tools:
 			expectErr:  false,
 			successMsg: "All installations completed successfully.",
 		},
-		// {
-		// 	name:      "Edge case with unexpected arguments",
-		// 	args:      []string{"--non-interactive", "--unexpected_arg"},
-		// 	expectErr: true,
-		// 	errorMsg:  "unknown flag: --unexpected_arg",
-		// },
 	}
 
 	for _, tc := range tests {

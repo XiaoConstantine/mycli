@@ -9,16 +9,16 @@ import (
 	"github.com/XiaoConstantine/mycli/pkg/iostreams"
 	"github.com/XiaoConstantine/mycli/pkg/utils"
 
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
-func NewInstallToolsCmd(iostream *iostreams.IOStreams) *cobra.Command {
+func NewInstallToolsCmd(iostream *iostreams.IOStreams, statsCollector *utils.StatsCollector) *cobra.Command {
 	cs := iostream.ColorScheme()
 	var configFile string
 	var force bool
 	var nonInteractive bool
+	var toolStats []*utils.Stats
 
 	cmd := &cobra.Command{
 		Use:   "tools",
@@ -36,7 +36,11 @@ func NewInstallToolsCmd(iostream *iostreams.IOStreams) *cobra.Command {
 				fmt.Fprintf(iostream.ErrOut, cs.Red("Error loading configuration: %v\n"), err)
 				return utils.ConfigNotFoundError
 			}
-			return InstallToolsFromConfig(iostream, config, ctx, force)
+			toolStats, err = InstallToolsFromConfig(iostream, config, ctx, force)
+			for _, item := range toolStats {
+				statsCollector.AddStat(item)
+			}
+			return err
 		},
 	}
 	cmd.Flags().StringVarP(&configFile, "config", "c", "config.yaml", "Path to the configuration file")
@@ -45,28 +49,37 @@ func NewInstallToolsCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	return cmd
 }
 
-func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolConfig, ctx context.Context, force bool) error {
+func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolConfig, ctx context.Context, force bool) ([]*utils.Stats, error) {
 	cs := iostream.ColorScheme()
+	var stats []*utils.Stats
+
 	parentSpan, ctx := tracer.StartSpanFromContext(ctx, "install_tools")
 	defer parentSpan.Finish()
 	// Log tool installation details
-	var installedTools [][]string
-	startTime := time.Now()
 	for _, tool := range config.Tools {
 		toolSpan, toolCtx := tracer.StartSpanFromContext(ctx, fmt.Sprintf("install_%s", tool.Name))
 		toolStartTime := time.Now()
+		toolStat := utils.Stats{
+			Name:      tool.Name,
+			Operation: "Install",
+		}
 
 		fmt.Fprintf(iostream.Out, cs.Green("Installing tool %s...\n"), tool)
 		if tool.InstallCommand != "" {
 			fmt.Fprintf(iostream.Out, "Installing %s using custom command %s...\n", tool.Name, tool.InstallCommand)
 			if err := executeCommand(tool.InstallCommand, toolCtx); err != nil {
 				fmt.Fprintf(iostream.ErrOut, cs.Red("Failed to install %s: %v\n"), tool.Name, err)
+				toolStat.Status = "error"
+				toolStat.Duration = time.Since(toolStartTime)
+				stats = append(stats, &toolStat)
 				toolSpan.SetTag("status", "failed")
 				toolSpan.SetTag("error", err)
-				return err
+				return stats, err
 			}
 			toolDuration := time.Since(toolStartTime)
-			installedTools = append(installedTools, []string{tool.Name, toolDuration.String(), "succeed"})
+			toolStat.Status = "success"
+			toolStat.Duration = toolDuration
+			stats = append(stats, &toolStat)
 		} else {
 			// Default to Homebrew installation
 			command := "brew install"
@@ -78,29 +91,35 @@ func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolCon
 			}
 			fmt.Fprintf(iostream.Out, "Installing %s using Homebrew with %s...\n", tool.Name, command)
 			if err := executeCommand(fmt.Sprintf("%s %s", command, tool.Name), toolCtx); err != nil {
+				toolStat.Status = "error"
+				toolStat.Duration = time.Since(toolStartTime)
+				stats = append(stats, &toolStat)
+
 				toolSpan.SetTag("status", "failed")
 				toolSpan.SetTag("error", err)
 				fmt.Fprintf(iostream.ErrOut, cs.Red("Failed to install %s: %v\n"), tool.Name, err)
-				return err
+				return stats, err
 			}
 			toolDuration := time.Since(toolStartTime)
-			installedTools = append(installedTools, []string{tool.Name, toolDuration.String(), "succeed"})
+			toolStat.Status = "success"
+			toolStat.Duration = toolDuration
+			stats = append(stats, &toolStat)
 		}
 		toolSpan.SetTag("status", "success")
 		toolSpan.Finish()
 	}
 
-	totalDuration := time.Since(startTime)
-	installedTools = append(installedTools, []string{"Total", totalDuration.String()})
-	// Print summary of installed tools in a table
-	table := tablewriter.NewWriter(iostream.Out)
-	table.SetHeader([]string{"Tool", "Duration", "Status"})
-	for _, v := range installedTools {
-		table.Append(v)
-	}
-	table.Render()
+	// totalDuration := time.Since(startTime)
+	// installedTools = append(installedTools, []string{"Total", totalDuration.String()})
+	// // Print summary of installed tools in a table
+	// table := tablewriter.NewWriter(iostream.Out)
+	// table.SetHeader([]string{"Tool", "Duration", "Status"})
+	// for _, v := range installedTools {
+	// 	table.Append(v)
+	// }
+	// table.Render()
 	fmt.Fprintln(iostream.Out, cs.GreenBold("All requested tools and casks have been installed successfully."))
-	return nil
+	return stats, nil
 }
 
 func executeCommand(command string, ctx context.Context) error {

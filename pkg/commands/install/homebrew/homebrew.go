@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/XiaoConstantine/mycli/pkg/utils"
 
@@ -22,8 +23,9 @@ var execCommandContext = exec.CommandContext
 // It checks if the current user is an administrator, and if so, runs the Homebrew
 // installation script using the current user's credentials. If the current user
 // is not an administrator, it prints an error message and exits.
-func NewCmdHomeBrew(iostream *iostreams.IOStreams, userUtils utils.UserUtils) *cobra.Command {
+func NewCmdHomeBrew(iostream *iostreams.IOStreams, userUtils utils.UserUtils, statsCollector *utils.StatsCollector) *cobra.Command {
 	cs := iostream.ColorScheme()
+	var stats *utils.Stats
 
 	cmd := &cobra.Command{
 		Use:   "homebrew",
@@ -35,7 +37,11 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams, userUtils utils.UserUtils) *c
 			"group": "install",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-
+			startTime := time.Now()
+			stats = &utils.Stats{
+				Name:      "Homebrew",
+				Operation: "install",
+			}
 			currentUser, _ := userUtils.GetCurrentUser()
 			span, ctx := tracer.StartSpanFromContext(cmd.Context(), "install_homebrew")
 			defer span.Finish()
@@ -43,6 +49,10 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams, userUtils utils.UserUtils) *c
 			isAdmin := userUtils.IsAdmin(ctx, currentUser)
 			if IsHomebrewInstalled(ctx) {
 				fmt.Fprintln(iostream.Out, "Homebrew is installed.")
+				duration := time.Since(startTime)
+				stats.Duration = duration
+				stats.Status = "success"
+				statsCollector.AddStat(stats)
 				span.SetTag("status", "success")
 				span.Finish()
 				return nil
@@ -50,6 +60,10 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams, userUtils utils.UserUtils) *c
 
 			if !isAdmin {
 				fmt.Fprintln(iostream.ErrOut, cs.Red("You need to be an administrator to install Homebrew. Please run this command from an admin account."))
+				duration := time.Since(startTime)
+				stats.Duration = duration
+				stats.Status = "error"
+				statsCollector.AddStat(stats)
 				span.SetTag("error", true)
 				span.Finish(tracer.WithError(os.ErrPermission))
 				return os.ErrPermission
@@ -63,8 +77,13 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams, userUtils utils.UserUtils) *c
 			installCmd.Stdin = os.Stdin
 
 			err := installCmd.Run()
+			duration := time.Since(startTime)
+			stats.Duration = duration
 			if err != nil {
 				fmt.Fprintf(iostream.ErrOut, "Failed to install Homebrew: %v\n", err)
+				stats.Status = "error"
+				statsCollector.AddStat(stats)
+
 				span.SetTag("error", true)
 				span.Finish(tracer.WithError(err))
 				return err
@@ -78,6 +97,8 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams, userUtils utils.UserUtils) *c
 				fmt.Fprintln(iostream.Out, cs.Green("Homebrew installed successfully and PATH updated."))
 				fmt.Fprintln(iostream.Out, "If you don't see the changes immediately, you may need to restart your terminal or manually source your shell configuration file.")
 			}
+			stats.Status = "success"
+			statsCollector.AddStat(stats)
 			span.SetTag("status", "success")
 			return nil
 		},

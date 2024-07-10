@@ -25,7 +25,8 @@ func (m *mockCommandContext) CommandContext(ctx context.Context, name string, ar
 
 func TestNewInstallToolsCmd(t *testing.T) {
 	ios, _, _, _ := iostreams.Test()
-	cmd := NewInstallToolsCmd(ios)
+	statsCollector := utils.NewStatsCollector()
+	cmd := NewInstallToolsCmd(ios, statsCollector)
 
 	assert.NotNil(t, cmd)
 	assert.Equal(t, "tools", cmd.Use)
@@ -101,7 +102,7 @@ func TestInstallToolsFromConfig(t *testing.T) {
 			tt.mockSetup(mockCmd)
 
 			// Execute
-			err := InstallToolsFromConfig(ios, tt.config, context.Background(), tt.force)
+			_, err := InstallToolsFromConfig(ios, tt.config, context.Background(), tt.force)
 			// Assert
 			if tt.expectedError != nil {
 				assert.EqualError(t, err, tt.expectedError.Error())

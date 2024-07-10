@@ -19,6 +19,8 @@ import (
 
 func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	cs := iostream.ColorScheme()
+	statsCollector := utils.NewStatsCollector()
+
 	installCmd := &cobra.Command{
 		Use:   "install",
 		Short: "Install software",
@@ -94,12 +96,16 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 						subSpan.SetTag("status", "failed")
 						subSpan.SetTag("error", err)
 						subSpan.Finish()
+						utils.PrintCombinedStats(iostream, statsCollector.GetStats())
+
 						return err
 					}
 
 					subSpan.SetTag("status", "success")
 					subSpan.Finish()
 				}
+				utils.PrintCombinedStats(iostream, statsCollector.GetStats())
+
 				fmt.Fprintln(iostream.Out, cs.GreenBold("All installations completed successfully."))
 				return nil
 
@@ -179,12 +185,16 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 							subSpan.SetTag("status", "failed")
 							subSpan.SetTag("error", err)
 							subSpan.Finish()
+							utils.PrintCombinedStats(iostream, statsCollector.GetStats())
+
 							return err
 						}
 
 						subSpan.SetTag("status", "success")
 						subSpan.Finish()
 					}
+					utils.PrintCombinedStats(iostream, statsCollector.GetStats())
+
 					fmt.Fprintln(iostream.Out, cs.GreenBold("All installations completed successfully."))
 				} else {
 					// Run the specific chosen subcommand
@@ -214,10 +224,14 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 								subSpan.SetTag("status", "failed")
 								subSpan.SetTag("error", err)
 								subSpan.Finish()
+								utils.PrintCombinedStats(iostream, statsCollector.GetStats())
+
 								return err
 							}
 							subSpan.SetTag("status", "success")
 							subSpan.Finish()
+							utils.PrintCombinedStats(iostream, statsCollector.GetStats())
+
 							break
 						}
 					}
@@ -226,11 +240,15 @@ func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 			}
 		},
 	}
-
-	installCmd.AddCommand(xcode.NewCmdXcode(iostream))
 	utils := utils.RealUserUtils{}
-	installCmd.AddCommand(homebrew.NewCmdHomeBrew(iostream, utils))
-	installCmd.AddCommand(homebrew.NewInstallToolsCmd(iostream))
+
+	xcodeCmd := xcode.NewCmdXcode(iostream, statsCollector)
+	homebrewCmd := homebrew.NewCmdHomeBrew(iostream, utils, statsCollector)
+	toolsCmd := homebrew.NewInstallToolsCmd(iostream, statsCollector)
+
+	installCmd.AddCommand(xcodeCmd)
+	installCmd.AddCommand(homebrewCmd)
+	installCmd.AddCommand(toolsCmd)
 
 	for _, subcmd := range installCmd.Commands() {
 		subcmd.Flags().VisitAll(func(f *pflag.Flag) {
