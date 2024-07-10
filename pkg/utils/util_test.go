@@ -293,3 +293,27 @@ func TestGetOsInfoWithMock(t *testing.T) {
 	assert.NotEmpty(t, info["release"])
 	assert.NotEmpty(t, info["user"])
 }
+
+func TestCompareVersions(t *testing.T) {
+	testCases := []struct {
+		v1       string
+		v2       string
+		expected int
+	}{
+		{"v1.0.0", "v1.0.0", 0},
+		{"v1.0.0", "v1.0.1", -1},
+		{"v1.1.0", "v1.0.0", 1},
+		{"v2.0.0", "v1.9.9", 1},
+		{"v0.9.9", "v1.0.0", -1},
+		{"v1.0.0", "v1.0.0-alpha", 1},
+		{"v1.0.0-beta", "v1.0.0-alpha", 1},
+		{"v1.0.0-rc1", "v1.0.0-rc2", -1},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.v1+" vs "+tc.v2, func(t *testing.T) {
+			result := CompareVersions(tc.v1, tc.v2)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}

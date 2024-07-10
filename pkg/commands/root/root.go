@@ -8,7 +8,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/XiaoConstantine/mycli/pkg/build"
 	"github.com/XiaoConstantine/mycli/pkg/commands/install"
+	"github.com/XiaoConstantine/mycli/pkg/commands/update"
 	"github.com/XiaoConstantine/mycli/pkg/iostreams"
 	"github.com/XiaoConstantine/mycli/pkg/utils"
 
@@ -45,6 +47,7 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 		Long:          `Internal CLI help bootstrap my machine.`,
 		SilenceErrors: true,
 		SilenceUsage:  true,
+		Version:       fmt.Sprintf("%s (%s) - built on %s", build.Version, build.Commit, build.Date),
 	}
 	rootCmd.AddGroup(
 		&cobra.Group{
@@ -58,11 +61,18 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 			Title: "Configure commands",
 		})
 
+	rootCmd.AddGroup(&cobra.Group{
+		ID:    "update",
+		Title: "Update command",
+	})
+
 	installCmd := install.NewInstallCmd(iostream)
 	configureCmd := configure.NewConfigureCmd(iostream)
+	updateCmd := update.NewUpdateCmd(iostream)
 
 	rootCmd.AddCommand(installCmd)
 	rootCmd.AddCommand(configureCmd)
+	rootCmd.AddCommand(updateCmd)
 	rootCmd.PersistentFlags().Bool("help", false, "Show help for command")
 	rootCmd.PersistentFlags().BoolVar(&nonInteractive, "non-interactive", false, "Run in non-interactive mode")
 
@@ -76,6 +86,19 @@ func Run(args []string) ExitCode {
 
 	utils.PrintWelcomeMessage(iostream)
 	rootCmd, err := NewRootCmd(iostream)
+	if err != nil {
+		fmt.Fprintf(iostream.ErrOut, "Failed to create root command")
+		return exitError
+	}
+
+	// Check for updates
+	hasUpdate, latestVersion, err := update.CheckForUpdatesFunc(iostream)
+	if err != nil {
+		fmt.Fprintf(stderr, "Failed to check for updates: %s\n", err)
+	} else if hasUpdate {
+		fmt.Fprintf(iostream.Out, "A new version of mycli is available: %s (current: %s)\n", latestVersion, build.Version)
+		fmt.Fprintf(iostream.Out, "Run 'mycli update' to update\n\n")
+	}
 
 	os_info := utils.GetOsInfo()
 	// todo: make optional for tracing
@@ -134,10 +157,7 @@ func Run(args []string) ExitCode {
 		}
 		rootCmd.SetArgs([]string{selectedOption})
 	}
-	if err != nil {
-		fmt.Fprintf(stderr, "failed to create root command: %s\n", err)
-		return exitError
-	}
+
 	if _, err := rootCmd.ExecuteContextC(ctx); err != nil {
 		var pagerPipeError *iostreams.ErrClosedPagerPipe
 		var noResultsError utils.NoResultsError
