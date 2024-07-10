@@ -1,12 +1,14 @@
-name: Automated RC Tagging
+name: Automated Semantic Versioning
 
 on:
   workflow_dispatch: # Allows manual trigger from GitHub UI
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 0 * * *" # Run daily at midnight UTC
   push:
     branches:
-      - main # Adjust this as necessary, e.g., after merging a PR to your main branch
+      - main # Adjust this as necessary
+    paths:
+      - "**.go"
 
 jobs:
   tag:
@@ -17,26 +19,35 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all history for all tags
 
-      - name: Install Git
-        run: sudo apt-get install git -y
-
       - name: Determine New Tag
         id: newtag
         run: |
-          DATE=$(date +'%Y-%m-%d')
-          PREFIX="v${DATE}-rc"
-          # Fetch all tags, filter relevant, sort, and get the last one
-          LAST_TAG=$(git tag --list "${PREFIX}*" | sort -V | tail -n1)
-          if [[ -z "$LAST_TAG" ]]; then
-            NEW_TAG="${PREFIX}0"
+          # Get the latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+
+          # Extract major, minor, patch
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST_TAG#v}"
+
+          # Check commit messages since last tag
+          COMMITS=$(git log $LATEST_TAG..HEAD --pretty=format:"%s")
+
+          if echo "$COMMITS" | grep -qE "^BREAKING CHANGE"; then
+            NEW_MAJOR=$((MAJOR + 1))
+            NEW_MINOR=0
+            NEW_PATCH=0
+          elif echo "$COMMITS" | grep -qE "^feat:"; then
+            NEW_MAJOR=$MAJOR
+            NEW_MINOR=$((MINOR + 1))
+            NEW_PATCH=0
           else
-            LAST_RC_NUMBER=$(echo "$LAST_TAG" | grep -o -E 'rc[0-9]+$' | sed 's/rc//')
-            NEW_RC_NUMBER=$((LAST_RC_NUMBER + 1))
-            NEW_TAG="${PREFIX}${NEW_RC_NUMBER}"
+            NEW_MAJOR=$MAJOR
+            NEW_MINOR=$MINOR
+            NEW_PATCH=$((PATCH + 1))
           fi
+
+          NEW_TAG="v$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
           echo "New tag: $NEW_TAG"
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
-
       - name: Create and Push New Tag
         run: |
           git config user.name github-actions
