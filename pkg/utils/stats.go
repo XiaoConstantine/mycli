@@ -39,15 +39,23 @@ func (sc *StatsCollector) GetStats() []*Stats {
 }
 
 func PrintCombinedStats(iostream *iostreams.IOStreams, stats []*Stats) {
+	cs := iostream.ColorScheme()
 	table := tablewriter.NewWriter(iostream.Out)
 	table.SetHeader([]string{"Name", "Duration", "Status", "Operation"})
+	// Set table color to green
+	table.SetHeaderColor(
+		tablewriter.Colors{tablewriter.FgGreenColor},
+		tablewriter.Colors{tablewriter.FgGreenColor},
+		tablewriter.Colors{tablewriter.FgGreenColor},
+		tablewriter.Colors{tablewriter.FgGreenColor},
+	)
 
 	var totalDuration time.Duration
 	for _, stat := range stats {
-		table.Append([]string{stat.Name, stat.Duration.String(), stat.Status, stat.Operation})
+		table.Append([]string{cs.Green(stat.Name), cs.Green(stat.Duration.String()), cs.Green(stat.Status), cs.Green(stat.Operation)})
 		totalDuration += stat.Duration
 	}
 
-	table.Append([]string{"Total", totalDuration.String(), ""})
+	table.Append([]string{cs.Green("Total"), cs.Green(totalDuration.String()), ""})
 	table.Render()
 }

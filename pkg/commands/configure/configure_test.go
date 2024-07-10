@@ -53,7 +53,7 @@ func TestConfigureToolsFromConfig(t *testing.T) {
 	}
 
 	ios, _, stdout, stderr := iostreams.Test()
-	err = ConfigureToolsFromConfig(ios, config, context.Background(), false)
+	_, err = ConfigureToolsFromConfig(ios, config, context.Background(), false)
 
 	assert.NoError(t, err)
 	assert.Contains(t, stdout.String(), "Configuring test-tool...")
