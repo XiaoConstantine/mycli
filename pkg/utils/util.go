@@ -188,7 +188,7 @@ func getRandomASCIILogo() string {
 	return logos[rand.Intn(len(logos))]
 }
 
-func PrintWelcomeMessage(iostream *iostreams.IOStreams) {
+func PrintWelcomeMessage(iostream *iostreams.IOStreams, version string) {
 	cs := iostream.ColorScheme()
 	out := iostream.Out
 
@@ -199,7 +199,7 @@ func PrintWelcomeMessage(iostream *iostreams.IOStreams) {
 	fmt.Fprintln(out, cs.Blue(asciiLogo))
 	fmt.Fprintln(out, cs.Green("Your personal machine bootstrapping tool"))
 	fmt.Fprintln(out, "")
-	fmt.Fprintf(out, "Version: %s\n", cs.Yellow("1.0.0"))
+	fmt.Fprintf(out, "Version: %s\n", cs.Yellow(version))
 	fmt.Fprintf(out, "Current time: %s\n", cs.Yellow(time.Now().Format("2006-01-02 15:04:05")))
 	fmt.Fprintln(out, "")
 	fmt.Fprintln(out, "Available commands:")

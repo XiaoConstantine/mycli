@@ -270,7 +270,7 @@ func TestPrintWelcomeMessage(t *testing.T) {
 	ios, _, out, _ := iostreams.Test()
 
 	// Call the function
-	PrintWelcomeMessage(ios)
+	PrintWelcomeMessage(ios, "v1.0.0")
 	// Assert that something was written to the output
 	assert.NotEmpty(t, out.String())
 

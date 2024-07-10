@@ -84,8 +84,9 @@ func Run(args []string) ExitCode {
 	stderr := iostream.ErrOut
 	ctx := context.Background()
 
-	utils.PrintWelcomeMessage(iostream)
 	rootCmd, err := NewRootCmd(iostream)
+	utils.PrintWelcomeMessage(iostream, rootCmd.Version)
+
 	if err != nil {
 		fmt.Fprintf(iostream.ErrOut, "Failed to create root command")
 		return exitError
