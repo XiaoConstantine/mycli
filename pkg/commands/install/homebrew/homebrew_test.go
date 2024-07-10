@@ -6,11 +6,13 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"testing"
 
 	"github.com/XiaoConstantine/mycli/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 // MockUser is a mock implementation of the User interface.
@@ -179,6 +181,94 @@ func TestNewCmdHomeBrew(t *testing.T) {
 			assert.Contains(t, output, tt.expectedOutput)
 			mockCmd.AssertExpectations(t)
 			mockUtil.AssertExpectations(t)
+		})
+	}
+}
+
+func TestUpdatePath(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "homebrew_test")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	origHome := os.Getenv("HOME")
+	defer os.Setenv("HOME", origHome)
+	os.Setenv("HOME", tempDir)
+
+	tests := []struct {
+		name           string
+		setupFunc      func() string
+		expectedOutput string
+		expectedError  string
+		expectChange   bool
+	}{
+		{
+			name: "Update .zshrc",
+			setupFunc: func() string {
+				content := "# Initial content"
+				if err := os.WriteFile(filepath.Join(tempDir, ".zshrc"), []byte(content), 0644); err != nil {
+					return ""
+				}
+				return content
+			},
+			expectedOutput: "Updated .zshrc with Homebrew path\n",
+			expectChange:   true,
+		},
+		{
+			name: "No config file to update",
+			setupFunc: func() string {
+				return ""
+			},
+			expectedOutput: "",
+			expectChange:   false,
+		},
+		{
+			name: "Config already updated",
+			setupFunc: func() string {
+				content := "export PATH=\"/opt/homebrew/bin:$PATH\""
+				if err := os.WriteFile(filepath.Join(tempDir, ".zshrc"), []byte(content), 0644); err != nil {
+					return ""
+				}
+				return content
+			},
+			expectedOutput: "",
+			expectChange:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			os.RemoveAll(tempDir)
+			if err := os.MkdirAll(tempDir, 0755); err != nil {
+				return
+
+			}
+
+			ios, _, out, _ := iostreams.Test()
+
+			initialContent := tt.setupFunc()
+
+			err := updatePath(context.Background(), ios)
+
+			if tt.expectedError != "" {
+				assert.EqualError(t, err, tt.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			output := out.String()
+			assert.Contains(t, output, tt.expectedOutput)
+
+			changed := false
+			for _, file := range []string{".zshrc", ".bash_profile", ".profile"} {
+				content, err := os.ReadFile(filepath.Join(tempDir, file))
+				if err == nil {
+					if string(content) != initialContent {
+						changed = true
+						break
+					}
+				}
+			}
+			assert.Equal(t, tt.expectChange, changed, "Config file change status mismatch")
 		})
 	}
 }
