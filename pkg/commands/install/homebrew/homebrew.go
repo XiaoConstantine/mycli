@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/XiaoConstantine/mycli/pkg/utils"
@@ -68,6 +69,15 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams, userUtils utils.UserUtils) *c
 				span.Finish(tracer.WithError(err))
 				return err
 			}
+
+			// Update PATH after successful installation
+			if err := updatePath(ctx, iostream); err != nil {
+				fmt.Fprintf(iostream.ErrOut, "Warning: %v\n", err)
+				// We don't return here because Homebrew is still installed successfully
+			} else {
+				fmt.Fprintln(iostream.Out, cs.Green("Homebrew installed successfully and PATH updated."))
+				fmt.Fprintln(iostream.Out, "If you don't see the changes immediately, you may need to restart your terminal or manually source your shell configuration file.")
+			}
 			span.SetTag("status", "success")
 			return nil
 		},
@@ -87,4 +97,60 @@ func IsHomebrewInstalled(ctx context.Context) bool {
 
 	// Check the output. If it contains the path to the brew executable, Homebrew is installed.
 	return strings.Contains(string(output), "/brew")
+}
+
+func updatePath(ctx context.Context, iostream *iostreams.IOStreams) error {
+	homebrewPath := "/opt/homebrew/bin" // Default path for Apple Silicon Macs
+	if _, err := os.Stat(homebrewPath); os.IsNotExist(err) {
+		homebrewPath = "/usr/local/bin" // Default path for Intel Macs
+	}
+
+	currentPath := os.Getenv("PATH")
+	if !strings.Contains(currentPath, homebrewPath) {
+		newPath := fmt.Sprintf("%s:%s", homebrewPath, currentPath)
+		if err := os.Setenv("PATH", newPath); err != nil {
+			return fmt.Errorf("failed to update PATH: %v", err)
+		}
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get home directory: %v", err)
+	}
+
+	shellConfigFiles := []string{".zshrc"}
+	updatedFile := ""
+	for _, file := range shellConfigFiles {
+		configPath := filepath.Join(homeDir, file)
+		if _, err := os.Stat(configPath); err == nil {
+			content, err := os.ReadFile(configPath)
+			if err != nil {
+				return fmt.Errorf("failed to read %s: %v", file, err)
+			}
+
+			if !strings.Contains(string(content), fmt.Sprintf("export PATH=\"%s:$PATH\"", homebrewPath)) {
+				newContent := fmt.Sprintf("%s\nexport PATH=\"%s:$PATH\"\n", string(content), homebrewPath)
+				if err := os.WriteFile(configPath, []byte(newContent), 0644); err != nil {
+					return fmt.Errorf("failed to update %s: %v", file, err)
+				}
+				fmt.Fprintf(iostream.Out, "Updated %s with Homebrew path\n", file)
+				return nil // Exit after updating the first file that needs it
+			}
+		}
+	}
+
+	if updatedFile != "" {
+		// Attempt to source the updated file
+		cmd := execCommandContext(ctx, "zsh", "-c", fmt.Sprintf("source %s", updatedFile))
+		cmd.Stdout = iostream.Out
+		cmd.Stderr = iostream.ErrOut
+		if err := cmd.Run(); err != nil {
+			fmt.Fprintf(iostream.ErrOut, "Warning: Failed to source updated configuration: %v\n", err)
+			fmt.Fprintln(iostream.Out, "You may need to restart your terminal or manually source your shell configuration file.")
+		} else {
+			fmt.Fprintln(iostream.Out, "Shell configuration has been sourced.")
+		}
+	}
+
+	return nil
 }
