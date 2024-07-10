@@ -7,12 +7,14 @@ import (
 	"testing"
 
 	"github.com/XiaoConstantine/mycli/pkg/iostreams"
+	"github.com/XiaoConstantine/mycli/pkg/utils"
 )
 
 func TestNewCmdXcode(t *testing.T) {
 	ios, _, _, _ := iostreams.Test()
+	statsCollector := utils.NewStatsCollector()
 
-	cmd := NewCmdXcode(ios)
+	cmd := NewCmdXcode(ios, statsCollector)
 
 	if cmd.Use != "xcode" {
 		t.Errorf("Expected Use to be 'xcode', got %s", cmd.Use)
@@ -129,7 +131,9 @@ func TestRunE(t *testing.T) {
 			}
 
 			ios, _, _, _ := iostreams.Test()
-			cmd := NewCmdXcode(ios)
+			statsCollector := utils.NewStatsCollector()
+
+			cmd := NewCmdXcode(ios, statsCollector)
 			err := cmd.RunE(cmd, []string{})
 
 			if (err != nil) != tt.expectError {

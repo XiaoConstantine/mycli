@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/XiaoConstantine/mycli/pkg/iostreams"
+	"github.com/XiaoConstantine/mycli/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -138,7 +139,8 @@ func TestNewCmdHomeBrew(t *testing.T) {
 
 			mockUtil := &mockUtils{}
 			ios, _, out, errOut := iostreams.Test()
-			cmd := NewCmdHomeBrew(ios, mockUtil)
+			statsCollector := utils.NewStatsCollector()
+			cmd := NewCmdHomeBrew(ios, mockUtil, statsCollector)
 
 			// Mock GetCurrentUser
 			mockUtil.On("GetCurrentUser").Return(&user.User{Username: "testuser"}, nil)

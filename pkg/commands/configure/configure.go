@@ -17,13 +17,14 @@ import (
 	"github.com/XiaoConstantine/mycli/pkg/iostreams"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 func NewConfigureCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	cs := iostream.ColorScheme()
+	statsCollector := utils.NewStatsCollector()
+
 	var configFile string
 	var force bool
 
@@ -41,6 +42,7 @@ func NewConfigureCmd(iostream *iostreams.IOStreams) *cobra.Command {
 
 			var configPath string
 			var force bool
+			var stats []*utils.Stats
 
 			if nonInteractive {
 				configPath, _ = cmd.Flags().GetString("config")
@@ -79,7 +81,13 @@ func NewConfigureCmd(iostream *iostreams.IOStreams) *cobra.Command {
 
 				}
 
-				return ConfigureToolsFromConfig(iostream, config, ctx, force)
+				stats, err = ConfigureToolsFromConfig(iostream, config, ctx, force)
+				for _, item := range stats {
+					statsCollector.AddStat(item)
+				}
+				utils.PrintCombinedStats(iostream, statsCollector.GetStats())
+
+				return err
 			} else {
 				// Prompt for config file path
 				configPrompt := &survey.Input{
@@ -133,7 +141,13 @@ func NewConfigureCmd(iostream *iostreams.IOStreams) *cobra.Command {
 						return err
 					}
 				}
-				return ConfigureToolsFromConfig(iostream, config, ctx, force)
+				stats, err = ConfigureToolsFromConfig(iostream, config, ctx, force)
+				for _, item := range stats {
+					statsCollector.AddStat(item)
+				}
+				utils.PrintCombinedStats(iostream, statsCollector.GetStats())
+
+				return err
 			}
 		},
 	}
@@ -144,47 +158,44 @@ func NewConfigureCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	return cmd
 }
 
-func ConfigureToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolConfig, ctx context.Context, force bool) error {
+func ConfigureToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolConfig, ctx context.Context, force bool) ([]*utils.Stats, error) {
 	cs := iostream.ColorScheme()
+	var stats []*utils.Stats
 	parentSpan, ctx := tracer.StartSpanFromContext(ctx, "configure_tools")
 	defer parentSpan.Finish()
 
-	var configuredTools [][]string
-	startTime := time.Now()
-
 	for _, item := range config.Configure {
 		toolSpan, toolCtx := tracer.StartSpanFromContext(ctx, fmt.Sprintf("configure_%s", item.Name))
+		toolStat := utils.Stats{
+			Name:      item.Name,
+			Operation: "Configure",
+		}
+
 		toolStartTime := time.Now()
 
 		fmt.Fprintf(iostream.Out, cs.Green("Configuring %s...\n"), item.Name)
 
 		if err := configureTool(item, toolCtx, force); err != nil {
 			fmt.Fprintf(iostream.ErrOut, cs.Red("Failed to configure %s: %v\n"), item.Name, err)
+			toolStat.Status = "error"
+			toolStat.Duration = time.Since(toolStartTime)
+			stats = append(stats, &toolStat)
 			toolSpan.SetTag("status", "failed")
 			toolSpan.SetTag("error", err)
-			return err
+			return stats, err
 		}
 
 		toolDuration := time.Since(toolStartTime)
-		configuredTools = append(configuredTools, []string{item.Name, toolDuration.String(), "succeed"})
+		toolStat.Status = "success"
+		toolStat.Duration = toolDuration
+		stats = append(stats, &toolStat)
 
 		toolSpan.SetTag("status", "success")
 		toolSpan.Finish()
 	}
 
-	totalDuration := time.Since(startTime)
-	configuredTools = append(configuredTools, []string{"Total", totalDuration.String()})
-
-	// Print summary of configured tools in a table
-	table := tablewriter.NewWriter(iostream.Out)
-	table.SetHeader([]string{"Tool", "Duration", "Status"})
-	for _, v := range configuredTools {
-		table.Append(v)
-	}
-	table.Render()
-
 	fmt.Fprintln(iostream.Out, cs.GreenBold("All requested tools have been configured successfully."))
-	return nil
+	return stats, nil
 }
 
 func configureTool(item utils.ConfigureItem, ctx context.Context, force bool) error {
