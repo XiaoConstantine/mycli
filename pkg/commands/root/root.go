@@ -88,6 +88,7 @@ func Run(args []string) ExitCode {
 	rootCmd, err := NewRootCmd(iostream)
 	if err != nil {
 		fmt.Fprintf(iostream.ErrOut, "Failed to create root command")
+		return exitError
 	}
 
 	// Check for updates
