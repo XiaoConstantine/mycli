@@ -125,22 +125,41 @@ func ConvertToRawGitHubURL(inputURL string) (string, error) {
 	if err != nil || parsedURL.Scheme == "" || parsedURL.Host == "" {
 		return "", fmt.Errorf("invalid URL: %v", err)
 	}
-
 	if parsedURL.Host != "github.com" {
 		return inputURL, nil // Not a GitHub URL, return as-is
 	}
 
-	pathParts := strings.Split(parsedURL.Path, "/")
-	if len(pathParts) < 5 {
+	// Preserve trailing slash
+	hasTrailingSlash := strings.HasSuffix(parsedURL.Path, "/")
+
+	pathParts := strings.Split(strings.Trim(parsedURL.Path, "/"), "/")
+	if len(pathParts) < 3 {
 		return "", fmt.Errorf("invalid GitHub URL format")
+	}
+
+	username := pathParts[0]
+	repo := pathParts[1]
+	branch := "main"
+	var filePath []string
+
+	if len(pathParts) > 3 && (pathParts[2] == "blob" || pathParts[2] == "tree") {
+		branch = pathParts[3]
+		filePath = pathParts[4:]
+	} else {
+		filePath = pathParts[2:]
 	}
 
 	// Reconstruct the URL for raw content
 	rawURL := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/%s",
-		pathParts[1],                     // username
-		pathParts[2],                     // repository
-		pathParts[4],                     // branch (usually "master" or "main")
-		strings.Join(pathParts[5:], "/")) // file path
+		username,
+		repo,
+		branch,
+		strings.Join(filePath, "/"))
+
+	// Add trailing slash if original URL had one
+	if hasTrailingSlash && len(filePath) > 0 {
+		rawURL += "/"
+	}
 
 	return rawURL, nil
 }

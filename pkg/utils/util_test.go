@@ -172,42 +172,89 @@ func TestConvertToRawGitHubURL(t *testing.T) {
 		name     string
 		input    string
 		expected string
-		hasError bool
+		wantErr  bool
 	}{
 		{
-			name:     "Valid GitHub URL",
-			input:    "https://github.com/user/repo/blob/master/file.txt",
-			expected: "https://raw.githubusercontent.com/user/repo/master/file.txt",
-			hasError: false,
+			name:     "Basic GitHub URL",
+			input:    "https://github.com/username/repo/blob/main/file.txt",
+			expected: "https://raw.githubusercontent.com/username/repo/main/file.txt",
+			wantErr:  false,
+		},
+		{
+			name:     "GitHub URL without explicit branch",
+			input:    "https://github.com/username/repo/file.txt",
+			expected: "https://raw.githubusercontent.com/username/repo/main/file.txt",
+			wantErr:  false,
+		},
+		{
+			name:     "GitHub URL with subdirectory",
+			input:    "https://github.com/username/repo/blob/main/dir/file.txt",
+			expected: "https://raw.githubusercontent.com/username/repo/main/dir/file.txt",
+			wantErr:  false,
+		},
+		{
+			name:     "GitHub URL with multiple subdirectories",
+			input:    "https://github.com/username/repo/blob/main/dir1/dir2/file.txt",
+			expected: "https://raw.githubusercontent.com/username/repo/main/dir1/dir2/file.txt",
+			wantErr:  false,
+		},
+		{
+			name:     "GitHub URL with 'tree' instead of 'blob'",
+			input:    "https://github.com/username/repo/tree/main/dir",
+			expected: "https://raw.githubusercontent.com/username/repo/main/dir",
+			wantErr:  false,
+		},
+		{
+			name:     "GitHub URL with different branch",
+			input:    "https://github.com/username/repo/blob/develop/file.txt",
+			expected: "https://raw.githubusercontent.com/username/repo/develop/file.txt",
+			wantErr:  false,
+		},
+		{
+			name:     "GitHub URL with trailing slash",
+			input:    "https://github.com/username/repo/blob/main/dir/",
+			expected: "https://raw.githubusercontent.com/username/repo/main/dir/",
+			wantErr:  false,
 		},
 		{
 			name:     "Non-GitHub URL",
-			input:    "https://example.com/file.txt",
-			expected: "https://example.com/file.txt",
-			hasError: false,
+			input:    "https://gitlab.com/username/repo/blob/main/file.txt",
+			expected: "https://gitlab.com/username/repo/blob/main/file.txt",
+			wantErr:  false,
 		},
 		{
-			name:     "Invalid URL",
-			input:    "not a url",
-			expected: "",
-			hasError: true,
+			name:    "Invalid URL",
+			input:   "not-a-url",
+			wantErr: true,
 		},
 		{
-			name:     "Invalid GitHub URL format",
-			input:    "https://github.com/user/repo",
-			expected: "",
-			hasError: true,
+			name:    "GitHub URL with too few parts",
+			input:   "https://github.com/username",
+			wantErr: true,
+		},
+		{
+			name:     "GitHub URL with query parameters",
+			input:    "https://github.com/username/repo/blob/main/file.txt?raw=true",
+			expected: "https://raw.githubusercontent.com/username/repo/main/file.txt",
+			wantErr:  false,
+		},
+		{
+			name:     "GitHub URL with hash",
+			input:    "https://github.com/username/repo/blob/main/file.txt#L10",
+			expected: "https://raw.githubusercontent.com/username/repo/main/file.txt",
+			wantErr:  false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := ConvertToRawGitHubURL(tt.input)
-			if tt.hasError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
+			got, err := ConvertToRawGitHubURL(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ConvertToRawGitHubURL() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.expected {
+				t.Errorf("ConvertToRawGitHubURL() = %v, want %v", got, tt.expected)
 			}
 		})
 	}
