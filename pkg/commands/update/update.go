@@ -16,6 +16,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var CheckForUpdatesFunc = CheckForUpdates
+
 func NewUpdateCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update",

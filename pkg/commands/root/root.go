@@ -92,7 +92,7 @@ func Run(args []string) ExitCode {
 	}
 
 	// Check for updates
-	hasUpdate, latestVersion, err := update.CheckForUpdates(iostream)
+	hasUpdate, latestVersion, err := update.CheckForUpdatesFunc(iostream)
 	if err != nil {
 		fmt.Fprintf(stderr, "Failed to check for updates: %s\n", err)
 	} else if hasUpdate {
@@ -157,10 +157,7 @@ func Run(args []string) ExitCode {
 		}
 		rootCmd.SetArgs([]string{selectedOption})
 	}
-	if err != nil {
-		fmt.Fprintf(stderr, "failed to create root command: %s\n", err)
-		return exitError
-	}
+
 	if _, err := rootCmd.ExecuteContextC(ctx); err != nil {
 		var pagerPipeError *iostreams.ErrClosedPagerPipe
 		var noResultsError utils.NoResultsError

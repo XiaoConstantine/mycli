@@ -4,10 +4,20 @@ import (
 	"testing"
 
 	"github.com/XiaoConstantine/mycli/pkg/commands/root"
+	"github.com/XiaoConstantine/mycli/pkg/commands/update"
+	"github.com/XiaoConstantine/mycli/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRun(t *testing.T) {
+	// Save the original function and defer its restoration
+	originalCheckForUpdates := update.CheckForUpdatesFunc
+	defer func() { update.CheckForUpdatesFunc = originalCheckForUpdates }()
+
+	// Mock the CheckForUpdates function
+	update.CheckForUpdatesFunc = func(iostream *iostreams.IOStreams) (bool, string, error) {
+		return false, "v1.0.0", nil // No update available
+	}
 	// Define test cases
 	tests := []struct {
 		name     string
