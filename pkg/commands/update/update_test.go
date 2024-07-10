@@ -93,7 +93,8 @@ func TestUpdateCLI(t *testing.T) {
 			Assets: []githubAsset{
 				{
 					Name:               fmt.Sprintf("mycli_%s_%s", runtime.GOOS, runtime.GOARCH),
-					BrowserDownloadURL: server.URL,
+					BrowserDownloadURL: server.URL, // Use the mock server URL
+
 				},
 			},
 		}, nil
