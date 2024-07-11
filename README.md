@@ -54,6 +54,13 @@ tools:
   - name: "neovim"
   - name: "alacritty"
     method: "cask"
+  - name: "gh"
+    post_install:
+      - gh auth login
+  - name: "pyenv"
+    post_install:
+      - "echo 'eval \"$(pyenv init -)\"' >> $HOME/.zshrc"
+      - "pyenv install 3.9"
   - name: "gcloud util"
     install_command: "gcloud components install beta pubsub-emulator bq cloud_sql_proxy gke-gcloud-auth-plugin"
   - name: "uv"
