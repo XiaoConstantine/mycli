@@ -96,7 +96,8 @@ func isXcodeAlreadyInstalled(ctx context.Context) bool {
 		"/Applications/Xcode.app",
 		"/Library/Developer/CommandLineTools",
 		"/Applications/Xcode.app/Contents/Developer",
-		"/Users/runner/Library/Developer/Xcode", // Common path in GitHub Actions
+		"/Users/runner/Library/Developer/Xcode",
+		"/Applications/Xcode_", // Common path in GitHub Actions
 	}
 
 	for _, path := range knownPaths {
