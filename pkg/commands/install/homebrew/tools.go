@@ -76,6 +76,16 @@ func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolCon
 				toolSpan.SetTag("error", err)
 				return stats, err
 			}
+			// Run post-install commands if they exist
+			if tool.PostInstall != nil && len(tool.PostInstall) > 0 {
+				for _, cmd := range tool.PostInstall {
+					expandedCmd := os.ExpandEnv(cmd) // Expand environment variables in the command
+					if err := executeCommand(expandedCmd, ctx); err != nil {
+						fmt.Fprintf(iostream.ErrOut, "Failed to run post-install command for %s: %v\n", tool.Name, err)
+						// Decide whether to continue or return based on the error
+					}
+				}
+			}
 			toolDuration := time.Since(toolStartTime)
 			toolStat.Status = "success"
 			toolStat.Duration = toolDuration
@@ -100,6 +110,18 @@ func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolCon
 				fmt.Fprintf(iostream.ErrOut, cs.Red("Failed to install %s: %v\n"), tool.Name, err)
 				return stats, err
 			}
+
+			// Run post-install commands
+			// Run post-install commands if they exist
+			if tool.PostInstall != nil && len(tool.PostInstall) > 0 {
+				for _, cmd := range tool.PostInstall {
+					expandedCmd := os.ExpandEnv(cmd) // Expand environment variables in the command
+					if err := executeCommand(expandedCmd, ctx); err != nil {
+						fmt.Fprintf(iostream.ErrOut, "Failed to run post-install command for %s: %v\n", tool.Name, err)
+						// Decide whether to continue or return based on the error
+					}
+				}
+			}
 			toolDuration := time.Since(toolStartTime)
 			toolStat.Status = "success"
 			toolStat.Duration = toolDuration
@@ -109,15 +131,6 @@ func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolCon
 		toolSpan.Finish()
 	}
 
-	// totalDuration := time.Since(startTime)
-	// installedTools = append(installedTools, []string{"Total", totalDuration.String()})
-	// // Print summary of installed tools in a table
-	// table := tablewriter.NewWriter(iostream.Out)
-	// table.SetHeader([]string{"Tool", "Duration", "Status"})
-	// for _, v := range installedTools {
-	// 	table.Append(v)
-	// }
-	// table.Render()
 	fmt.Fprintln(iostream.Out, cs.GreenBold("All requested tools and casks have been installed successfully."))
 	return stats, nil
 }
