@@ -7,8 +7,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/XiaoConstantine/mycli/pkg/build"
+	"github.com/XiaoConstantine/mycli/pkg/commands/extensions"
 	"github.com/XiaoConstantine/mycli/pkg/commands/install"
 	"github.com/XiaoConstantine/mycli/pkg/commands/update"
 	"github.com/XiaoConstantine/mycli/pkg/iostreams"
@@ -48,6 +51,22 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		Version:       fmt.Sprintf("%s (%s) - built on %s", build.Version, build.Commit, build.Date),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Check if the first argument is an extension
+			if len(args) == 0 {
+				return nil
+			}
+			extName := args[0]
+			extDir := extensions.GetExtensionsDir()
+			extPath := filepath.Join(extDir, extensions.ExtensionPrefix+extName)
+
+			if _, err := os.Stat(extPath); err == nil {
+				ext := &extensions.Extension{Name: extName, Path: extPath}
+				return ext.Execute(args[1:])
+			}
+
+			return nil
+		},
 	}
 	rootCmd.AddGroup(
 		&cobra.Group{
@@ -66,6 +85,11 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 		Title: "Update command",
 	})
 
+	rootCmd.AddGroup(&cobra.Group{
+		ID:    "extension",
+		Title: "Extension commands",
+	})
+
 	installCmd := install.NewInstallCmd(iostream)
 	configureCmd := configure.NewConfigureCmd(iostream)
 	updateCmd := update.NewUpdateCmd(iostream)
@@ -73,6 +97,14 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 	rootCmd.AddCommand(installCmd)
 	rootCmd.AddCommand(configureCmd)
 	rootCmd.AddCommand(updateCmd)
+
+	// Add extension management command
+	extCmd := extensions.NewCmdExtension(iostream)
+	if extCmd != nil {
+		rootCmd.AddCommand(extCmd)
+	} else {
+		return nil, fmt.Errorf("failed to create extension command")
+	}
 	rootCmd.PersistentFlags().Bool("help", false, "Show help for command")
 	rootCmd.PersistentFlags().BoolVar(&nonInteractive, "non-interactive", false, "Run in non-interactive mode")
 
@@ -130,7 +162,7 @@ func Run(args []string) ExitCode {
 		nonInteractive = true
 	}
 	// If args are provided or --help flag is set, execute the command directly
-	if len(args) > 0 || rootCmd.Flags().Lookup("help").Changed {
+	if len(args) > 0 {
 		if _, err := rootCmd.ExecuteContextC(ctx); err != nil {
 			handleExecutionError(err, iostream)
 			return exitError
@@ -138,7 +170,6 @@ func Run(args []string) ExitCode {
 		return exitOK
 	}
 	return runInteractiveMode(rootCmd, ctx, iostream, options)
-
 }
 
 func runInteractiveMode(rootCmd *cobra.Command, ctx context.Context, iostream *iostreams.IOStreams, options []string) ExitCode {
