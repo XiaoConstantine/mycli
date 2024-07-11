@@ -16,6 +16,6 @@ func main() {
 		fmt.Printf("mycli version %s (%s) - built on %s\n", build.Version, build.Commit, build.Date)
 		os.Exit(0)
 	}
-	code := root.Run([]string{})
+	code := root.Run(os.Args[1:])
 	os.Exit(int(code))
 }
