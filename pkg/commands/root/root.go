@@ -129,63 +129,79 @@ func Run(args []string) ExitCode {
 	if len(args) > 0 && args[0] == "--non-interactive" {
 		nonInteractive = true
 	}
-
-	if !nonInteractive {
-		// Prompt user to select a command
-		var selectedOption string
-		prompt := &survey.Select{
-			Message: "Choose a command to run:",
-			Options: options,
-		}
-		if err := survey.AskOne(prompt, &selectedOption); err != nil {
-			fmt.Fprintf(stderr, "failed to select a command: %s\n", err)
+	// If args are provided or --help flag is set, execute the command directly
+	if len(args) > 0 || rootCmd.Flags().Lookup("help").Changed {
+		if _, err := rootCmd.ExecuteContextC(ctx); err != nil {
+			handleExecutionError(err, iostream)
 			return exitError
 		}
-
-		// Confirm if user wants to run the install command
-		var confirm bool
-		confirmPrompt := &survey.Confirm{
-			Message: fmt.Sprintf("Do you want to run the '%s' command?", selectedOption),
-		}
-		if err := survey.AskOne(confirmPrompt, &confirm); err != nil {
-			fmt.Fprintf(stderr, "failed to confirm the command: %s\n", err)
-			return exitError
-		}
-
-		if !confirm {
-			fmt.Println("Operation cancelled by user.")
-			return exitOK
-		}
-		rootCmd.SetArgs([]string{selectedOption})
+		return exitOK
 	}
+	return runInteractiveMode(rootCmd, ctx, iostream, options)
+
+}
+
+func runInteractiveMode(rootCmd *cobra.Command, ctx context.Context, iostream *iostreams.IOStreams, options []string) ExitCode {
+	var selectedOption string
+	prompt := &survey.Select{
+		Message: "Choose a command to run:",
+		Options: options,
+	}
+	if err := survey.AskOne(prompt, &selectedOption); err != nil {
+		fmt.Fprintf(iostream.ErrOut, "failed to select a command: %s\n", err)
+		return exitError
+	}
+
+	// Confirm if user wants to run the install command
+	var confirm bool
+	confirmPrompt := &survey.Confirm{
+		Message: fmt.Sprintf("Do you want to run the '%s' command?", selectedOption),
+	}
+	if err := survey.AskOne(confirmPrompt, &confirm); err != nil {
+		fmt.Fprintf(iostream.ErrOut, "failed to confirm the command: %s\n", err)
+		return exitError
+	}
+
+	if !confirm {
+		fmt.Println("Operation cancelled by user.")
+		return exitOK
+	}
+	rootCmd.SetArgs([]string{selectedOption})
 
 	if _, err := rootCmd.ExecuteContextC(ctx); err != nil {
-		var pagerPipeError *iostreams.ErrClosedPagerPipe
-		var noResultsError utils.NoResultsError
-
-		if err == utils.SilentError {
-			return exitError
-		} else if err == utils.PendingError {
-			return exitPending
-		} else if utils.IsUserCancellation(err) {
-			if errors.Is(err, terminal.InterruptErr) {
-				// ensure the next shell prompt will start on its own line
-				fmt.Fprint(stderr, "\n")
-			}
-			return exitCancel
-		} else if errors.As(err, &pagerPipeError) {
-			// ignore the error raised when piping to a closed pager
-			return exitOK
-		} else if errors.As(err, &noResultsError) {
-			if iostream.IsStdoutTTY() {
-				fmt.Fprintln(stderr, noResultsError.Error())
-			}
-			// no results is not a command failure
-			return exitOK
-		} else if err == utils.ConfigNotFoundError {
-			fmt.Fprintln(stderr, iostream.ColorScheme().Red("Config file is invalid for tools install, skipping..."))
-			return exitOK
-		}
+		handleExecutionError(err, iostream)
+		return exitError
 	}
 	return exitOK
+}
+
+func handleExecutionError(err error, iostream *iostreams.IOStreams) {
+	var pagerPipeError *iostreams.ErrClosedPagerPipe
+	var noResultsError utils.NoResultsError
+
+	if err == utils.SilentError {
+		return
+	} else if err == utils.PendingError {
+		return
+	} else if utils.IsUserCancellation(err) {
+		if errors.Is(err, terminal.InterruptErr) {
+			// ensure the next shell prompt will start on its own line
+			fmt.Fprint(iostream.ErrOut, "\n")
+		}
+		return
+	} else if errors.As(err, &pagerPipeError) {
+		// ignore the error raised when piping to a closed pager
+		return
+	} else if errors.As(err, &noResultsError) {
+		if iostream.IsStdoutTTY() {
+			fmt.Fprintln(iostream.ErrOut, noResultsError.Error())
+		}
+		// no results is not a command failure
+		return
+	} else if err == utils.ConfigNotFoundError {
+		fmt.Fprintln(iostream.ErrOut, iostream.ColorScheme().Red("Config file is invalid for tools install, skipping..."))
+		return
+	}
+
+	fmt.Fprintf(iostream.ErrOut, "Error: %v\n", err)
 }

@@ -87,6 +87,24 @@ func isXcodeAlreadyInstalled(ctx context.Context) bool {
 	if err != nil {
 		return false // xcode-select command failed, likely Xcode not installed
 	}
+
+	outputStr := strings.TrimSpace(string(output))
+	fmt.Printf("xcode-select -p output: %s\n", outputStr)
 	// Check output for a known path component, like "/Applications/Xcode.app"
-	return strings.Contains(string(output), "/Applications/Xcode.app") || strings.Contains(string(output), "CommandLineTools")
+	// Check for various possible paths
+	knownPaths := []string{
+		"/Applications/Xcode.app",
+		"/Library/Developer/CommandLineTools",
+		"/Applications/Xcode.app/Contents/Developer",
+		"/Users/runner/Library/Developer/Xcode",
+		"/Applications/Xcode_", // Common path in GitHub Actions
+	}
+
+	for _, path := range knownPaths {
+		if strings.Contains(outputStr, path) {
+			return true
+		}
+	}
+
+	return false
 }
