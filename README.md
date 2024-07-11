@@ -22,7 +22,7 @@
 
 - `install`: Installs packages and tools.
 - `configure`: Sets up configurations for tools like zsh, Neovim, etc.
-- `extension`: (TODO) Extends functionality to support project build systems and integrate AI assistants.
+- `extension`: Extends functionality to support project build systems, editor and integrate AI assistants, etc.
 
 ## Features
 
@@ -63,6 +63,11 @@ configure:
     config_url: "https://github.com/XiaoConstantine/nvim_lua_config/blob/master/init.lua"
     install_path: "~/.config/nvim/init.vim"
 ```
+
+### Extension
+mycli supports a powerful extension system that allows you to add custom functionality to the CLI.
+
+
 
 ## Development
 Ensure you have Go version 1.21 or higher installed. You can check your Go version by running:
