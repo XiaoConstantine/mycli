@@ -67,7 +67,64 @@ configure:
 ### Extension
 mycli supports a powerful extension system that allows you to add custom functionality to the CLI.
 
+#### Developing Extensions
 
+To create a new extension for mycli:
+
+1. Create a new directory for your extension:
+2. Create an executable file named `mycli-myextension` (replace "myextension" with your extension name):
+3. Edit the file and add your extension logic. Here's a simple example in bash:
+```bash
+#!/bin/bash
+echo "Hello from myextension!"
+echo "Arguments received: $@"
+```
+4. You can use any programming language to create your extension, as long as the file is executable and follows the naming convention mycli-<extensionname>.
+
+#### Installing extension
+To install an extension:
+
+1. Use the mycli extension install command:
+```bash
+mycli extension install <repository-url>
+```
+Replace <repository-url> with the URL of the Git repository containing your extension.
+
+2. The extension will be cloned into the mycli extensions directory (usually ~/.mycli/extensions/).
+
+#### Using extension
+Once an extension is installed, you can use it directly through mycli:
+```bash
+mycli myextension [arguments]
+```
+
+Replace myextension with the name of your extension and add any arguments it accepts.
+
+#### Managing extension
+* List installed extensions:
+```bash
+mycli extension list
+```
+
+* Update an extension:
+```bash
+mycli extension update <extension-name>
+```
+
+* Remove an extension:
+```bash
+mycli extension remove <extension-name>
+```
+
+#### Example extension structure
+```bash
+mycli-myextension/
+├── mycli-myextension (executable)
+├── README.md
+├── LICENSE
+└── tests/
+    └── test_myextension.sh
+```
 
 ## Development
 Ensure you have Go version 1.21 or higher installed. You can check your Go version by running:
