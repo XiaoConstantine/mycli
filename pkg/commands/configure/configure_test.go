@@ -122,7 +122,7 @@ func TestConfigureTool(t *testing.T) {
 			item: utils.ConfigureItem{
 				Name:             "TestCLI",
 				InstallPath:      filepath.Join(tempDir, "cli_config.yaml"),
-				ConfigureCommand: fmt.Sprintf("touch %s", filepath.Join(tempDir, "cli_config.yaml")),
+				ConfigureCommand: []string{fmt.Sprintf("touch %s", filepath.Join(tempDir, "cli_config.yaml"))},
 			},
 			force:       false,
 			expectError: false,
