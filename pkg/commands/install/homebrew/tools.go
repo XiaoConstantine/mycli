@@ -13,6 +13,37 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
+// NewInstallToolsCmd creates and returns a cobra.Command for the 'tools' subcommand of the install command.
+//
+// The tools subcommand allows users to install specific software tools defined in a configuration file.
+// It supports both interactive and non-interactive modes, and can install multiple tools at once.
+//
+// Usage:
+//
+//	mycli install tools [flags]
+//	mycli install tools [tool1] [tool2] ... [flags]
+//
+// Flags:
+//
+//	-c, --config string   Path to the configuration file (default "~/.mycli/config.yaml")
+//	-f, --force           Force reinstall of tools even if they are already installed
+//	--non-interactive     Run in non-interactive mode
+//
+// The function sets up the command's flags and its Run function. It uses the provided IOStreams
+// for input/output operations and a StatsCollector for gathering installation statistics.
+//
+// Parameters:
+//   - iostream: An iostreams.IOStreams instance for handling input/output operations.
+//   - statsCollector: A pointer to a StatsCollector for gathering installation statistics.
+//
+// Returns:
+//   - *cobra.Command: A pointer to the created cobra.Command for the tools subcommand.
+//
+// Example:
+//
+//	// Creating the tools subcommand
+//	toolsCmd := install.toolsCmd(iostreams.System(), &StatsCollector{})
+//	installCmd.AddCommand(toolsCmd)
 func NewInstallToolsCmd(iostream *iostreams.IOStreams, statsCollector *utils.StatsCollector) *cobra.Command {
 	cs := iostream.ColorScheme()
 	var configFile string
@@ -49,6 +80,23 @@ func NewInstallToolsCmd(iostream *iostreams.IOStreams, statsCollector *utils.Sta
 	return cmd
 }
 
+// InstallToolsFromConfig installs tools based on the provided configuration.
+//
+// This function is responsible for the actual installation process of the tools.
+// It reads the tool definitions from the config, checks if they need to be installed,
+// and executes the installation commands.
+//
+// Parameters:
+//   - iostream: An iostreams.IOStreams instance for I/O operations.
+//   - config: A pointer to the ToolConfig containing tool definitions.
+//   - ctx: A context.Context for handling cancellation and timeouts.
+//   - force: A boolean indicating whether to force reinstallation of tools.
+//   - statsCollector: A pointer to a StatsCollector for gathering installation statistics.
+//   - requestedTools: A slice of strings containing names of specific tools to install.
+//     If empty, all tools in the config will be considered.
+//
+// Returns:
+//   - error: An error if the installation process fails, nil otherwise.
 func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolConfig, ctx context.Context, force bool) ([]*utils.Stats, error) {
 	cs := iostream.ColorScheme()
 	var stats []*utils.Stats
