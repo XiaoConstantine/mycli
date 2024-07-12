@@ -245,9 +245,8 @@ func expandTilde(path string) string {
 }
 
 func executeConfigureCommand(ctx context.Context, command string, installPath string) error {
-	parts := strings.Fields(command)
-	fmt.Println(parts)
-	cmd := exec.CommandContext(ctx, parts[0], parts[1:]...)
+	fmt.Printf("Executing command: %s\n", command)
+	cmd := exec.CommandContext(ctx, "sh", "-c", command)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
@@ -256,8 +255,10 @@ func executeConfigureCommand(ctx context.Context, command string, installPath st
 		return fmt.Errorf("failed to execute configure command: %v", err)
 	}
 
-	if _, err := os.Stat(installPath); os.IsNotExist(err) {
-		return fmt.Errorf("configure command executed, but config file not found at %s", installPath)
+	if installPath != "" {
+		if _, err := os.Stat(installPath); os.IsNotExist(err) {
+			return fmt.Errorf("configure command executed, but config file not found at %s", installPath)
+		}
 	}
 
 	return nil
