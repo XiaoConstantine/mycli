@@ -256,8 +256,10 @@ func executeConfigureCommand(ctx context.Context, command string, installPath st
 		return fmt.Errorf("failed to execute configure command: %v", err)
 	}
 
-	if _, err := os.Stat(installPath); os.IsNotExist(err) {
-		return fmt.Errorf("configure command executed, but config file not found at %s", installPath)
+	if installPath != "" {
+		if _, err := os.Stat(installPath); os.IsNotExist(err) {
+			return fmt.Errorf("configure command executed, but config file not found at %s", installPath)
+		}
 	}
 
 	return nil
