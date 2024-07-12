@@ -105,7 +105,7 @@ func TestConfigureTool(t *testing.T) {
 				InstallPath: filepath.Join(tempDir, "existing-tool-config"),
 			},
 			force:       false,
-			expectError: true,
+			expectError: false,
 		},
 		{
 			name: "File already exists - with force",
@@ -150,7 +150,11 @@ func TestConfigureTool(t *testing.T) {
 				if tc.name == "Execute command success" {
 					assert.Equal(t, "", string(content))
 				} else {
-					assert.Equal(t, "test configuration content", string(content))
+					if tc.item.Name == "existing-tool" && !tc.force {
+						assert.Equal(t, "existing content", string(content))
+					} else {
+						assert.Equal(t, "test configuration content", string(content))
+					}
 				}
 			}
 		})
