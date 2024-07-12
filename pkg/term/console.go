@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func enableVirtualTerminalProcessing(f *os.File) error {
+func enableVirtualTerminalProcessing() error {
 	return errors.New("not implemented")
 }
 

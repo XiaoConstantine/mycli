@@ -57,7 +57,7 @@ func FromEnv() Term {
 
 	isVirtualTerminal := false
 	if stdoutIsTTY {
-		if err := enableVirtualTerminalProcessing(os.Stdout); err == nil {
+		if err := enableVirtualTerminalProcessing(); err == nil {
 			isVirtualTerminal = true
 		}
 	}

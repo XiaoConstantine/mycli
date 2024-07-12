@@ -432,7 +432,10 @@ func System() *IOStreams {
 		io.progressIndicatorEnabled = true
 	}
 
-	if stdoutIsTTY && hasAlternateScreenBuffer(terminal.IsTrueColorSupported()) {
+	if stdoutIsTTY && func() bool {
+		var _ bool = terminal.IsTrueColorSupported()
+		return hasAlternateScreenBuffer()
+	}() {
 		io.alternateScreenBufferEnabled = true
 	}
 

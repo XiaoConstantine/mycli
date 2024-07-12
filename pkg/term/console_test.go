@@ -13,7 +13,7 @@ func TestEnableVirtualTerminalProcessing(t *testing.T) {
 	defer os.Remove(f.Name())
 	defer f.Close()
 
-	err = enableVirtualTerminalProcessing(f)
+	err = enableVirtualTerminalProcessing()
 	if err == nil || err.Error() != "not implemented" {
 		t.Errorf("enableVirtualTerminalProcessing() error = %v, want 'not implemented'", err)
 	}

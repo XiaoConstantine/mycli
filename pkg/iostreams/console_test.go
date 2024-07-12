@@ -38,7 +38,7 @@ func TestHasAlternateScreenBuffer(t *testing.T) {
 			os.Setenv("TERM", tt.termEnv)
 
 			// Call the function and check the result
-			result := hasAlternateScreenBuffer(true)
+			result := hasAlternateScreenBuffer()
 			if result != tt.expected {
 				t.Errorf("hasAlternateScreenBuffer() = %v, want %v", result, tt.expected)
 			}
