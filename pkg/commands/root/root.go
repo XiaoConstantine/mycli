@@ -41,6 +41,8 @@ const (
 
 var nonInteractive bool
 
+// NewRootCmd creates and returns the root command for mycli.
+// It sets up all subcommands and flags, and defines the main run logic.
 func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 	cs := iostream.ColorScheme()
 
@@ -111,6 +113,11 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 	return rootCmd, nil
 }
 
+// Run executes the main logic of mycli. It handles argument parsing,
+// command execution, and returns an appropriate exit code.
+//
+// args: Command-line arguments passed to mycli.
+// Returns: An ExitCode indicating the result of the command execution.
 func Run(args []string) ExitCode {
 	iostream := iostreams.System()
 	stderr := iostream.ErrOut

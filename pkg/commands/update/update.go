@@ -18,6 +18,30 @@ import (
 
 var CheckForUpdatesFunc = CheckForUpdates
 
+// UpdateCmd creates and returns a cobra.Command for the 'update' command of mycli.
+//
+// The update command checks for and installs the latest version of mycli.
+// It compares the current version with the latest available version and
+// performs the update if a newer version is found.
+//
+// Usage:
+//
+//	mycli update
+//
+// The function sets up the command's flags and its Run function. It uses the provided
+// IOStreams for input/output operations and interacts with the user to confirm the update.
+//
+// Parameters:
+//   - iostream: An iostreams.IOStreams instance for handling input/output operations.
+//
+// Returns:
+//   - *cobra.Command: A pointer to the created cobra.Command for the update command.
+//
+// Example:
+//
+//	// Creating the update command
+//	updateCmd := update.UpdateCmd(iostreams.System())
+//	rootCmd.AddCommand(updateCmd)
 func NewUpdateCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update",

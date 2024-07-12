@@ -1,3 +1,9 @@
+/*
+Package install provides functionality for installing software tools and packages using mycli.
+
+This package contains commands and utilities for managing the installation of various
+development tools and software packages required for setting up a development environment.
+*/
 package install
 
 import (
@@ -17,6 +23,37 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
+// InstallCmd creates and returns a cobra.Command for the 'install' subcommand of mycli.
+//
+// The install command allows users to install various software tools and packages
+// either interactively or via command-line arguments. It supports installation from
+// different sources including package managers (e.g., Homebrew) and custom scripts.
+//
+// Usage:
+//
+//	mycli install [flags]
+//	mycli install [tool-name] [flags]
+//
+// Flags:
+//
+//	-c, --config string   Path to the configuration file (default "~/.mycli/config.yaml")
+//	-f, --force           Force reinstallation of already installed tools
+//	--non-interactive     Run in non-interactive mode
+//
+// The function sets up the command's flags, its Run function, and any subcommands.
+// It uses the provided IOStreams for input/output operations.
+//
+// Parameters:
+//   - iostream: An iostreams.IOStreams instance for handling input/output operations.
+//
+// Returns:
+//   - *cobra.Command: A pointer to the created cobra.Command for the install subcommand.
+//
+// Example:
+//
+//	// Creating the install command
+//	installCmd := install.InstallCmd(iostreams.System())
+//	rootCmd.AddCommand(installCmd)
 func NewInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	cs := iostream.ColorScheme()
 	statsCollector := utils.NewStatsCollector()
