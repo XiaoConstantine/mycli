@@ -216,11 +216,20 @@ func configureTool(item utils.ConfigureItem, ctx context.Context, force bool) er
 		return fmt.Errorf("failed to create directory: %v", err)
 	}
 
-	if item.ConfigureCommand != "" {
-		return executeConfigureCommand(ctx, item.ConfigureCommand, installPath)
-	} else {
+	if len(item.ConfigureCommand) > 0 {
+		for _, cmd := range item.ConfigureCommand {
+			fmt.Printf("Executing configure command: %s\n", cmd)
+			if err := executeConfigureCommand(ctx, cmd, installPath); err != nil {
+				return err
+			}
+		}
+	} else if item.ConfigURL != "" {
+		fmt.Printf("Downloading config from URL: %s\n", item.ConfigURL)
 		return downloadAndSaveConfig(item.ConfigURL, installPath)
+	} else {
+		return fmt.Errorf("no configure command or config URL provided for %s", item.Name)
 	}
+	return nil
 }
 
 func expandTilde(path string) string {
@@ -246,7 +255,7 @@ func expandTilde(path string) string {
 
 func executeConfigureCommand(ctx context.Context, command string, installPath string) error {
 	fmt.Printf("Executing command: %s\n", command)
-	cmd := exec.CommandContext(ctx, "sh", "-c", command)
+	cmd := exec.CommandContext(ctx, "zsh", "-c", command)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
