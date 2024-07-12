@@ -206,7 +206,8 @@ func configureTool(item utils.ConfigureItem, ctx context.Context, force bool) er
 
 	// Check if file already exists and force flag is not set
 	if _, err := os.Stat(installPath); err == nil && !force {
-		return fmt.Errorf("configuration file already exists at %s. Use --force to overwrite", installPath)
+		fmt.Printf("configuration file already exists at %s. Use --force to overwrite", installPath)
+		return nil
 	}
 
 	// Create the directory if it doesn't exist
