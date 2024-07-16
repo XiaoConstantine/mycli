@@ -96,6 +96,7 @@ func updateCLI(iostream *iostreams.IOStreams) error {
 		return fmt.Errorf("no suitable release found for %s/%s", runtime.GOOS, runtime.GOARCH)
 	}
 
+	fmt.Fprintf(iostream.Out, "Downloading %s\n", assetURL)
 	// Download the new binary
 	resp, err := http.Get(assetURL)
 	if err != nil {
