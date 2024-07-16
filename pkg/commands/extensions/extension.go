@@ -51,6 +51,9 @@ func NewCmdExtension(iostream *iostreams.IOStreams) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "extension",
 		Short: "Manage mycli extensions",
+		Annotations: map[string]string{
+			"group": "extension",
+		},
 	}
 
 	cmd.AddCommand(newExtensionInstallCmd(iostream))
@@ -66,7 +69,10 @@ func newExtensionInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	return &cobra.Command{
 		Use:   "install <repository>",
 		Short: "Install a mycli extension",
-		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{
+			"group": "extension",
+		},
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			repo := args[0]
 			extDir := getExtensionDir()
@@ -74,7 +80,6 @@ func newExtensionInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 			extName = strings.TrimSuffix(extName, ".git")
 			// Remove the ExtensionPrefix if it's already there
 			extName = strings.TrimPrefix(extName, ExtensionPrefix)
-			fmt.Fprintf(iostream.Out, "Extension name: %s\n", extName)
 			extPath := filepath.Join(extDir, ExtensionPrefix+extName)
 			fmt.Fprintf(iostream.Out, "Extension path: %s\n", extPath)
 
@@ -100,6 +105,9 @@ func newExtensionListCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "List installed mycli extensions",
+		Annotations: map[string]string{
+			"group": "extension",
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			extDir := GetExtensionsDir()
 			entries, err := os.ReadDir(extDir)
@@ -125,7 +133,10 @@ func newExtensionRemoveCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	return &cobra.Command{
 		Use:   "remove <extension-name>",
 		Short: "Remove a mycli extension",
-		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{
+			"group": "extension",
+		},
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			extName := args[0]
 			extDir := GetExtensionsDir()
@@ -145,7 +156,10 @@ func newExtensionUpdateCmd(iostream *iostreams.IOStreams) *cobra.Command {
 	return &cobra.Command{
 		Use:   "update <extension-name>",
 		Short: "Update a mycli extension",
-		Args:  cobra.ExactArgs(1),
+		Annotations: map[string]string{
+			"group": "extension",
+		},
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			extName := args[0]
 			extDir := GetExtensionsDir()
@@ -169,7 +183,10 @@ func newExtensionRunCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "run <extension-name> [args...]",
 		Short: "Run a mycli extension",
-		Args:  cobra.MinimumNArgs(1),
+		Annotations: map[string]string{
+			"group": "extension",
+		},
+		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf("extension name is required")
