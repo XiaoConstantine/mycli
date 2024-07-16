@@ -57,6 +57,7 @@ func NewCmdExtension(iostream *iostreams.IOStreams) *cobra.Command {
 	cmd.AddCommand(newExtensionListCmd(iostream))
 	cmd.AddCommand(newExtensionRemoveCmd(iostream))
 	cmd.AddCommand(newExtensionUpdateCmd(iostream))
+	cmd.AddCommand(newExtensionRunCmd()) // Add this new subcommand
 
 	return cmd
 }
@@ -162,4 +163,36 @@ func newExtensionUpdateCmd(iostream *iostreams.IOStreams) *cobra.Command {
 			return nil
 		},
 	}
+}
+
+func newExtensionRunCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "run <extension-name> [args...]",
+		Short: "Run a mycli extension",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("extension name is required")
+			}
+			extName := args[0]
+			extArgs := args[1:]
+			return runExtension(extName, extArgs)
+		},
+	}
+}
+
+func runExtension(extName string, args []string) error {
+	extDir := getExtensionDir()
+	extPath := filepath.Join(extDir, "mycli-"+extName, "mycli-"+extName)
+
+	if _, err := os.Stat(extPath); os.IsNotExist(err) {
+		return fmt.Errorf("extension '%s' not found", extName)
+	}
+
+	cmd := exec.Command(extPath, args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
 }

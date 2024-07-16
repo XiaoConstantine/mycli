@@ -1,6 +1,7 @@
 package extensions
 
 import (
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/XiaoConstantine/mycli/pkg/iostreams"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -234,6 +236,172 @@ func TestExtensionInstallCommand(t *testing.T) {
 			// Check that a directory with .git suffix was not created
 			_, err = os.Stat(extDir + ".git")
 			assert.True(t, os.IsNotExist(err), "Directory with .git suffix should not exist")
+		})
+	}
+}
+
+func TestRunExtension(t *testing.T) {
+	// Create a temporary directory to simulate the extensions directory
+	tempDir, err := os.MkdirTemp("", "mycli-test-extensions")
+	if err != nil {
+		t.Fatalf("Failed to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Mock the getExtensionDir function
+	oldGetExtensionDir := getExtensionDir
+	getExtensionDir = func() string { return tempDir }
+	defer func() { getExtensionDir = oldGetExtensionDir }()
+
+	// Create a mock extension
+	mockExtName := "mock-extension"
+	mockExtDir := filepath.Join(tempDir, "mycli-"+mockExtName)
+	mockExtPath := filepath.Join(mockExtDir, "mycli-"+mockExtName)
+	err = os.MkdirAll(mockExtDir, 0755)
+	assert.NoError(t, err)
+
+	// Create a mock executable
+	mockExtContent := []byte("#!/bin/sh\necho \"Mock extension executed with args: $@\"")
+	err = os.WriteFile(mockExtPath, mockExtContent, 0755)
+	assert.NoError(t, err)
+
+	// Test cases
+	testCases := []struct {
+		name           string
+		extName        string
+		args           []string
+		expectedError  bool
+		expectedOutput string
+	}{
+		{
+			name:           "Existing extension",
+			extName:        mockExtName,
+			args:           []string{"arg1", "arg2"},
+			expectedError:  false,
+			expectedOutput: "Mock extension executed with args: arg1 arg2\n",
+		},
+		{
+			name:           "Non-existent extension",
+			extName:        "non-existent",
+			args:           []string{},
+			expectedError:  true,
+			expectedOutput: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Capture stdout
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
+
+			err := runExtension(tc.extName, tc.args)
+
+			// Restore stdout
+			w.Close()
+			os.Stdout = oldStdout
+
+			// Read captured output
+			var buf bytes.Buffer
+			_, _ = buf.ReadFrom(r)
+			output := buf.String()
+
+			if tc.expectedError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedOutput, output)
+			}
+		})
+	}
+}
+
+func TestNewExtensionRunCmd(t *testing.T) {
+	// Create a temporary directory to simulate the extensions directory
+	tempDir, err := os.MkdirTemp("", "mycli-test-extensions")
+	if err != nil {
+		t.Fatalf("Failed to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Mock the getExtensionDir function
+	oldGetExtensionDir := getExtensionDir
+	getExtensionDir = func() string { return tempDir }
+	defer func() { getExtensionDir = oldGetExtensionDir }()
+
+	// Create a mock extension
+	mockExtName := "mock-extension"
+	mockExtDir := filepath.Join(tempDir, "mycli-"+mockExtName)
+	mockExtPath := filepath.Join(mockExtDir, "mycli-"+mockExtName)
+	err = os.MkdirAll(mockExtDir, 0755)
+	assert.NoError(t, err)
+
+	// Create a mock executable
+	mockExtContent := []byte("#!/bin/sh\necho \"Mock extension executed with args: $@\"")
+	err = os.WriteFile(mockExtPath, mockExtContent, 0755)
+	assert.NoError(t, err)
+
+	// Create the run command
+	runCmd := newExtensionRunCmd()
+
+	testCases := []struct {
+		name           string
+		args           []string
+		expectedError  bool
+		expectedOutput string
+		expectedErrMsg string
+	}{
+		{
+			name:           "Run existing extension",
+			args:           []string{mockExtName, "arg1", "arg2"},
+			expectedError:  false,
+			expectedOutput: "Mock extension executed with args: arg1 arg2\n",
+		},
+		{
+			name:           "Run non-existent extension",
+			args:           []string{"non-existent"},
+			expectedError:  true,
+			expectedErrMsg: "extension 'non-existent' not found",
+		},
+		{
+			name:           "No arguments",
+			args:           []string{},
+			expectedError:  true,
+			expectedErrMsg: "extension name is required",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Capture stdout
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
+
+			// Execute the command
+			cmd := &cobra.Command{}
+			cmd.SetArgs(tc.args)
+			err := runCmd.RunE(cmd, tc.args)
+
+			// Restore stdout
+			w.Close()
+			os.Stdout = oldStdout
+
+			// Read captured output
+			var buf bytes.Buffer
+			_, _ = buf.ReadFrom(r)
+			output := buf.String()
+
+			if tc.expectedError {
+				assert.Error(t, err)
+				if tc.expectedErrMsg != "" {
+					assert.Contains(t, err.Error(), tc.expectedErrMsg)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedOutput, output)
+			}
 		})
 	}
 }
