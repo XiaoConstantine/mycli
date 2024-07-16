@@ -102,7 +102,7 @@ Replace <repository-url> with the URL of the Git repository containing your exte
 #### Using extension
 Once an extension is installed, you can use it directly through mycli:
 ```bash
-mycli myextension [arguments]
+mycli extension run myextension [arguments]
 ```
 
 Replace myextension with the name of your extension and add any arguments it accepts.
