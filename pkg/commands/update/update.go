@@ -86,7 +86,7 @@ func updateCLI(iostream *iostreams.IOStreams) error {
 	// Determine the asset to download based on the current OS and architecture
 	assetURL := ""
 	for _, asset := range release.Assets {
-		if asset.Name == fmt.Sprintf("mycli_%s_%s", runtime.GOOS, runtime.GOARCH) {
+		if strings.Contains(strings.ToLower(asset.Name), fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)) {
 			assetURL = asset.BrowserDownloadURL
 			break
 		}
