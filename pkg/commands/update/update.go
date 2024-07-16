@@ -1,6 +1,8 @@
 package update
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -108,7 +110,7 @@ func updateCLI(iostream *iostreams.IOStreams) error {
 	installPath := filepath.Join(installDir, "mycli")
 
 	// Create a temporary file
-	tmpFile, err := os.CreateTemp("", "mycli-update")
+	tmpFile, err := os.CreateTemp("", "mycli-update-*.tar.gz")
 	if err != nil {
 		return fmt.Errorf("failed to create temporary file: %w", err)
 	}
@@ -121,18 +123,62 @@ func updateCLI(iostream *iostreams.IOStreams) error {
 	}
 	tmpFile.Close()
 
-	// Make the temporary file executable
-	if err := os.Chmod(tmpFile.Name(), 0755); err != nil {
-		return fmt.Errorf("failed to make new binary executable: %w", err)
+	// Open the temporary file for reading
+	tmpFile, err = os.Open(tmpFile.Name())
+	if err != nil {
+		return fmt.Errorf("failed to open temporary file: %w", err)
 	}
+	defer tmpFile.Close()
 
-	// Replace the old binary with the new one
-	if err := os.Rename(tmpFile.Name(), installPath); err != nil {
-		return fmt.Errorf("failed to replace old binary: %w", err)
+	// Create a gzip reader
+	gzr, err := gzip.NewReader(tmpFile)
+	if err != nil {
+		return fmt.Errorf("failed to create gzip reader: %w", err)
 	}
+	defer gzr.Close()
 
-	fmt.Fprintf(iostream.Out, "mycli has been updated successfully to version %s!\n", release.TagName)
-	return nil
+	// Create a tar reader
+	tr := tar.NewReader(gzr)
+
+	// Extract the mycli binary
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("failed to read tar: %w", err)
+		}
+
+		if header.Name == "mycli" {
+			// Create a new temporary file for the extracted binary
+			extractedTmp, err := os.CreateTemp("", "mycli-extracted")
+			if err != nil {
+				return fmt.Errorf("failed to create temporary file for extracted binary: %w", err)
+			}
+			defer os.Remove(extractedTmp.Name())
+
+			// Copy the file contents
+			if _, err := io.Copy(extractedTmp, tr); err != nil {
+				return fmt.Errorf("failed to extract binary: %w", err)
+			}
+			extractedTmp.Close()
+
+			// Make the temporary file executable
+			if err := os.Chmod(extractedTmp.Name(), 0755); err != nil {
+				return fmt.Errorf("failed to make new binary executable: %w", err)
+			}
+
+			// Replace the old binary with the new one
+			if err := os.Rename(extractedTmp.Name(), installPath); err != nil {
+				return fmt.Errorf("failed to replace old binary: %w", err)
+			}
+
+			fmt.Fprintf(iostream.Out, "mycli has been updated successfully to version %s!\n", release.TagName)
+			return nil
+		}
+	}
+	return fmt.Errorf("failed to find mycli binary in the downloaded archive")
 }
 
 var ensureInstallDirectory = func() (string, error) {

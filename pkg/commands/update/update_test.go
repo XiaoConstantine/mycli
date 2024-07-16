@@ -1,6 +1,9 @@
 package update
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -74,11 +77,45 @@ func TestUpdateCLI(t *testing.T) {
 	err = os.WriteFile(mockBinaryPath, []byte("old binary"), 0755)
 	assert.NoError(t, err)
 
+	// Create a mock binary content
+	mockBinaryContent := []byte("new binary")
+
+	// Create a buffer to hold the tar.gz content
+	var buf bytes.Buffer
+
+	// Create a gzip writer
+	gw := gzip.NewWriter(&buf)
+
+	// Create a tar writer
+	tw := tar.NewWriter(gw)
+
+	// Add the mock binary to the tar archive
+	hdr := &tar.Header{
+		Name: "mycli",
+		Mode: 0755,
+		Size: int64(len(mockBinaryContent)),
+	}
+	if err := tw.WriteHeader(hdr); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tw.Write(mockBinaryContent); err != nil {
+		t.Fatal(err)
+	}
+	// Close the tar writer
+	if err := tw.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Close the gzip writer
+	if err := gw.Close(); err != nil {
+		t.Fatal(err)
+	}
+
 	// Mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Type", "application/gzip")
 		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("new binary")); err != nil {
+		if _, err := w.Write(buf.Bytes()); err != nil {
 			return
 		}
 	}))
