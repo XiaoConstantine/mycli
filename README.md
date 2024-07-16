@@ -37,7 +37,7 @@
 To install `mycli`, run the following command:
 
 ```bash
-curl -sSf https://xiaoconstantine.github.io/mycli/scripts/install.sh | sh
+ curl -sSf https://cli-dev.com/scripts/install.sh | sh
 ```
 
 After installation, you can start using mycli by simply typing:
