@@ -11,6 +11,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var execCommand = exec.Command
+var getExtensionDir = GetExtensionsDir
+
 const ExtensionPrefix = "mycli-"
 
 type Extension struct {
@@ -37,7 +40,7 @@ func GetExtensionsDir() string {
 }
 
 func (e *Extension) Execute(args []string) error {
-	cmd := exec.Command(e.Path, args...)
+	cmd := execCommand(e.Path, args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -65,15 +68,20 @@ func newExtensionInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			repo := args[0]
-			extDir := GetExtensionsDir()
+			extDir := getExtensionDir()
 			extName := filepath.Base(repo)
+			extName = strings.TrimSuffix(extName, ".git")
+			// Remove the ExtensionPrefix if it's already there
+			extName = strings.TrimPrefix(extName, ExtensionPrefix)
+			fmt.Fprintf(iostream.Out, "Extension name: %s\n", extName)
 			extPath := filepath.Join(extDir, ExtensionPrefix+extName)
+			fmt.Fprintf(iostream.Out, "Extension path: %s\n", extPath)
 
 			if err := os.MkdirAll(extDir, 0755); err != nil {
 				return fmt.Errorf("failed to create extensions directory: %w", err)
 			}
 
-			gitCmd := exec.Command("git", "clone", repo, extPath)
+			gitCmd := execCommand("git", "clone", repo, extPath)
 			gitCmd.Stdout = iostream.Out
 			gitCmd.Stderr = iostream.ErrOut
 
@@ -142,7 +150,7 @@ func newExtensionUpdateCmd(iostream *iostreams.IOStreams) *cobra.Command {
 			extDir := GetExtensionsDir()
 			extPath := filepath.Join(extDir, ExtensionPrefix+extName)
 
-			gitCmd := exec.Command("git", "-C", extPath, "pull")
+			gitCmd := execCommand("git", "-C", extPath, "pull")
 			gitCmd.Stdout = iostream.Out
 			gitCmd.Stderr = iostream.ErrOut
 
