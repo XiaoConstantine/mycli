@@ -58,7 +58,7 @@ require (
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/spf13/cobra v1.8.1
-	github.com/spf13/pflag v1.0.5
+	github.com/spf13/pflag v1.0.7
 	golang.org/x/sys v0.29.0
 	golang.org/x/term v0.21.0
 )
