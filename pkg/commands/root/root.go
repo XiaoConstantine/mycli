@@ -13,6 +13,7 @@ import (
 	"github.com/XiaoConstantine/mycli/pkg/build"
 	"github.com/XiaoConstantine/mycli/pkg/commands/extensions"
 	"github.com/XiaoConstantine/mycli/pkg/commands/install"
+	"github.com/XiaoConstantine/mycli/pkg/commands/llm"
 	"github.com/XiaoConstantine/mycli/pkg/commands/update"
 	"github.com/XiaoConstantine/mycli/pkg/iostreams"
 	"github.com/XiaoConstantine/mycli/pkg/utils"
@@ -92,12 +93,19 @@ func NewRootCmd(iostream *iostreams.IOStreams) (*cobra.Command, error) {
 		Title: "Extension commands",
 	})
 
+	rootCmd.AddGroup(&cobra.Group{
+		ID:    "llm",
+		Title: "LLM commands",
+	})
+
 	installCmd := install.NewInstallCmd(iostream)
 	configureCmd := configure.NewConfigureCmd(iostream)
+	llmCmd := llm.NewLLMCmd(iostream)
 	updateCmd := update.NewUpdateCmd(iostream)
 
 	rootCmd.AddCommand(installCmd)
 	rootCmd.AddCommand(configureCmd)
+	rootCmd.AddCommand(llmCmd)
 	rootCmd.AddCommand(updateCmd)
 
 	// Add extension management command

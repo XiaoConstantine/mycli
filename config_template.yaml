@@ -31,3 +31,30 @@ configure:
     install_path: "~/.config/nvim/init.vim"
 
   # Add more tools to configure as needed, following the same structure
+
+# Local LLM serving section
+# Fields:
+#   - state_dir: Directory for runtime state and logs (optional)
+#   - default_profile: Profile used when `mycli llm` is run without a profile name (optional)
+#   - profiles: Named runtime profiles (optional)
+llm:
+  state_dir: "~/.mycli/llm"
+  default_profile: "default"
+  profiles:
+    default:
+      runtime: "auto"
+      host: "127.0.0.1"
+      port: 12434
+      model: "qwen2.5-coder:7b"
+      ctx_size: 8192
+      threads: 8
+      gpu_layers: -1
+
+    gguf:
+      runtime: "llamacpp"
+      host: "127.0.0.1"
+      port: 12435
+      model_path: "~/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf"
+      ctx_size: 8192
+      threads: 8
+      gpu_layers: 99

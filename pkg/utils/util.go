@@ -45,6 +45,7 @@ func (RealUserUtils) IsAdmin(ctx context.Context, u *user.User) bool {
 type ToolConfig struct {
 	Tools     []Tool          `yaml:"tools"`
 	Configure []ConfigureItem `yaml:"configure"`
+	LLM       *LLMConfig      `yaml:"llm,omitempty"`
 }
 
 type Tool struct {
@@ -59,6 +60,23 @@ type ConfigureItem struct {
 	ConfigURL        string   `yaml:"config_url,omitempty"`
 	InstallPath      string   `yaml:"install_path"`
 	ConfigureCommand []string `yaml:"configure_command,omitempty"`
+}
+
+type LLMConfig struct {
+	StateDir       string                `yaml:"state_dir,omitempty"`
+	DefaultProfile string                `yaml:"default_profile,omitempty"`
+	Profiles       map[string]LLMProfile `yaml:"profiles,omitempty"`
+}
+
+type LLMProfile struct {
+	Runtime   string `yaml:"runtime,omitempty"`
+	Host      string `yaml:"host,omitempty"`
+	Port      int    `yaml:"port,omitempty"`
+	Model     string `yaml:"model,omitempty"`
+	ModelPath string `yaml:"model_path,omitempty"`
+	CtxSize   int    `yaml:"ctx_size,omitempty"`
+	Threads   int    `yaml:"threads,omitempty"`
+	GPULayers int    `yaml:"gpu_layers,omitempty"`
 }
 
 // LoadToolsConfig loads tool configuration from a YAML file.
@@ -189,6 +207,7 @@ func PrintWelcomeMessage(iostream *iostreams.IOStreams, version string) {
 	fmt.Fprintln(out, "Available commands:")
 	fmt.Fprintln(out, "  - install: Install software tools")
 	fmt.Fprintln(out, "  - config: Configure your system")
+	fmt.Fprintln(out, "  - llm: Start and manage local LLM runtimes")
 	fmt.Fprintln(out, "  - update: Update MyCLI")
 	fmt.Fprintln(out, "")
 	fmt.Fprintln(out, cs.Yellow("Tip: Use 'mycli --help' to see all available commands and options."))

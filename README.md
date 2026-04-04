@@ -18,10 +18,11 @@
 >It's intentionally this only works for `macos` I m interested extend it to linux in the future
 
 
-`mycli` streamlines the setup of development environments on macOS, providing easy command-line access to install and configure essential software tools. It's built around three main command groups:
+`mycli` streamlines the setup of development environments on macOS, providing easy command-line access to install and configure essential software tools. It's built around four main command groups:
 
 - `install`: Installs packages and tools.
 - `configure`: Sets up configurations for tools like zsh, Neovim, etc.
+- `llm`: Starts and manages local LLM runtimes such as Ollama and llama.cpp.
 - `extension`: Extends functionality to support project build systems, editor and integrate AI assistants, etc.
 
 ## Features
@@ -29,6 +30,7 @@
 - **Simplified Installation**: Uses `brew install` by default or custom commands where specified.
 - **GUI Tool Support**: Supports Homebrew Cask for GUI applications.
 - **Flexible Configuration**: Allows custom installation scripts and configuration settings.
+- **Local LLM Runtime Control**: Starts and tracks Ollama or llama.cpp servers with tmux-backed detached mode.
 
 ## Getting Started
 
@@ -69,7 +71,49 @@ configure:
   - name: "neovim"
     config_url: "https://github.com/XiaoConstantine/nvim_lua_config/blob/master/init.lua"
     install_path: "~/.config/nvim/init.vim"
+llm:
+  default_profile: "default"
+  profiles:
+    default:
+      runtime: "auto"
+      host: "127.0.0.1"
+      port: 12434
+      model: "qwen2.5-coder:7b"
+      ctx_size: 8192
+      threads: 8
+      gpu_layers: -1
+    gguf:
+      runtime: "llamacpp"
+      host: "127.0.0.1"
+      port: 12435
+      model_path: "~/models/qwen2.5-coder-7b-instruct-q4_k_m.gguf"
+      ctx_size: 8192
+      threads: 8
+      gpu_layers: 99
 ```
+
+### Local LLM Serving
+
+`mycli llm` manages detached local inference servers for `ollama` and `llama.cpp`.
+
+Prerequisites:
+
+- `tmux` for detached mode. Use `--foreground` if you want to stay attached.
+- `ollama` installed for logical model tags such as `qwen2.5-coder:7b`
+- `llama-server` installed for GGUF-backed `llama.cpp` runs
+
+Useful commands:
+
+```bash
+mycli llm doctor
+mycli llm start --runtime auto --model qwen2.5-coder:7b --config config.yaml
+mycli llm start gguf --config config.yaml
+mycli llm status
+mycli llm logs --follow
+mycli llm stop
+```
+
+Detached `start` runs the server in a `tmux` session named `mycli-llm`, stores state under `~/.mycli/llm/instances/`, and writes logs to `~/.mycli/llm/logs/`.
 
 ### Extension
 mycli supports a powerful extension system that allows you to add custom functionality to the CLI.
