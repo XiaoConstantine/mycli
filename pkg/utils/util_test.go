@@ -34,7 +34,9 @@ func TestLoadToolsConfig(t *testing.T) {
 	// Temporary file to mimic a YAML config file
 	tmpfile, err := os.CreateTemp("", "config*.yaml")
 	assert.NoError(t, err)
-	defer os.Remove(tmpfile.Name()) // clean up
+	defer func() {
+		assert.NoError(t, os.Remove(tmpfile.Name()))
+	}()
 
 	content := `
 tools:

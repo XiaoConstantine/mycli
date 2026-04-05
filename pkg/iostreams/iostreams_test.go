@@ -14,7 +14,7 @@ func TestStopAlternateScreenBuffer(t *testing.T) {
 	ios.SetAlternateScreenBufferEnabled(true)
 
 	ios.StartAlternateScreenBuffer()
-	fmt.Fprint(ios.Out, "test")
+	_, _ = fmt.Fprint(ios.Out, "test")
 	ios.StopAlternateScreenBuffer()
 
 	// Stopping a subsequent time should no-op.
@@ -201,11 +201,13 @@ func TestReadUserFile(t *testing.T) {
 	// Test reading from file
 	tmpfile, err := os.CreateTemp("", "test")
 	assert.NoError(t, err)
-	defer os.Remove(tmpfile.Name())
+	defer func() {
+		assert.NoError(t, os.Remove(tmpfile.Name()))
+	}()
 
 	_, err = tmpfile.Write([]byte("file content"))
 	assert.NoError(t, err)
-	tmpfile.Close()
+	assert.NoError(t, tmpfile.Close())
 
 	content, err = ios.ReadUserFile(tmpfile.Name())
 	assert.NoError(t, err)
@@ -218,12 +220,23 @@ func TestTempFile(t *testing.T) {
 	file, err := ios.TempFile("", "test")
 	assert.NoError(t, err)
 	assert.NotNil(t, file)
-	defer os.Remove(file.Name())
+	fileName := file.Name()
+	defer func() {
+		err := os.Remove(fileName)
+		if err != nil && !os.IsNotExist(err) {
+			assert.NoError(t, err)
+		}
+	}()
 
 	// Test with TempFileOverride
 	override, err := os.CreateTemp("", "override")
 	assert.NoError(t, err)
-	defer os.Remove(override.Name())
+	defer func() {
+		err := os.Remove(override.Name())
+		if err != nil && !os.IsNotExist(err) {
+			assert.NoError(t, err)
+		}
+	}()
 
 	ios.TempFileOverride = override
 	file, err = ios.TempFile("", "test")

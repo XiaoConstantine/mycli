@@ -278,7 +278,9 @@ func portAvailable(host string, port int) bool {
 	if err != nil {
 		return false
 	}
-	defer listener.Close()
+	defer func() {
+		_ = listener.Close()
+	}()
 	return true
 }
 

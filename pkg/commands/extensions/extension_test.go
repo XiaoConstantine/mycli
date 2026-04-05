@@ -28,7 +28,9 @@ func TestExtensionExecute(t *testing.T) {
 	// Create a temporary directory for testing
 	tempDir, err := os.MkdirTemp("", "mycli-test")
 	assert.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		assert.NoError(t, os.RemoveAll(tempDir))
+	}()
 
 	// Create a mock executable file
 	mockExecutable := filepath.Join(tempDir, ExtensionPrefix+"mock")
@@ -55,7 +57,9 @@ func TestIsExecutable(t *testing.T) {
 	// Create a temporary directory for testing
 	tempDir, err := os.MkdirTemp("", "mycli-test")
 	assert.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		assert.NoError(t, os.RemoveAll(tempDir))
+	}()
 
 	// Test cases
 	testCases := []struct {
@@ -95,7 +99,9 @@ func TestIsExtension(t *testing.T) {
 	// Create a temporary directory for testing
 	tempDir, err := os.MkdirTemp("", "mycli-test")
 	assert.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		assert.NoError(t, os.RemoveAll(tempDir))
+	}()
 
 	// Test cases
 	testCases := []struct {
@@ -166,7 +172,9 @@ func TestExtensionInstallCommand(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		assert.NoError(t, os.RemoveAll(tempDir))
+	}()
 
 	// Mock the GetExtensionsDir function to return our temp directory
 	oldGetExtensionsDir := getExtensionDir
@@ -246,7 +254,9 @@ func TestRunExtension(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		assert.NoError(t, os.RemoveAll(tempDir))
+	}()
 
 	// Mock the getExtensionDir function
 	oldGetExtensionDir := getExtensionDir
@@ -299,7 +309,7 @@ func TestRunExtension(t *testing.T) {
 			err := runExtension(tc.extName, tc.args)
 
 			// Restore stdout
-			w.Close()
+			assert.NoError(t, w.Close())
 			os.Stdout = oldStdout
 
 			// Read captured output
@@ -323,7 +333,9 @@ func TestNewExtensionRunCmd(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		assert.NoError(t, os.RemoveAll(tempDir))
+	}()
 
 	// Mock the getExtensionDir function
 	oldGetExtensionDir := getExtensionDir
@@ -385,7 +397,7 @@ func TestNewExtensionRunCmd(t *testing.T) {
 			err := runCmd.RunE(cmd, tc.args)
 
 			// Restore stdout
-			w.Close()
+			assert.NoError(t, w.Close())
 			os.Stdout = oldStdout
 
 			// Read captured output

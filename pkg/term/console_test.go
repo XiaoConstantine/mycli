@@ -10,8 +10,16 @@ func TestEnableVirtualTerminalProcessing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temporary file: %v", err)
 	}
-	defer os.Remove(f.Name())
-	defer f.Close()
+	defer func() {
+		if err := os.Remove(f.Name()); err != nil {
+			t.Fatalf("failed to remove temp file: %v", err)
+		}
+	}()
+	defer func() {
+		if err := f.Close(); err != nil {
+			t.Fatalf("failed to close temp file: %v", err)
+		}
+	}()
 
 	err = enableVirtualTerminalProcessing()
 	if err == nil || err.Error() != "not implemented" {

@@ -32,10 +32,16 @@ func TestHasAlternateScreenBuffer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Save the original TERM environment variable
 			origTerm := os.Getenv("TERM")
-			defer os.Setenv("TERM", origTerm)
+			defer func() {
+				if err := os.Setenv("TERM", origTerm); err != nil {
+					t.Fatalf("failed to restore TERM: %v", err)
+				}
+			}()
 
 			// Set the TERM environment variable for the test
-			os.Setenv("TERM", tt.termEnv)
+			if err := os.Setenv("TERM", tt.termEnv); err != nil {
+				t.Fatalf("failed to set TERM: %v", err)
+			}
 
 			// Call the function and check the result
 			result := hasAlternateScreenBuffer()

@@ -121,7 +121,9 @@ func (t Term) Size() (int, int, error) {
 	ttyOut := t.out
 	if ttyOut == nil || !IsTerminal(ttyOut) {
 		if f, err := openTTY(); err == nil {
-			defer f.Close()
+			defer func() {
+				_ = f.Close()
+			}()
 			ttyOut = f
 		} else {
 			return -1, -1, err

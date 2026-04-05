@@ -135,17 +135,17 @@ func Run(args []string) ExitCode {
 	utils.PrintWelcomeMessage(iostream, rootCmd.Version)
 
 	if err != nil {
-		fmt.Fprintf(iostream.ErrOut, "Failed to create root command")
+		_, _ = fmt.Fprintf(iostream.ErrOut, "Failed to create root command")
 		return exitError
 	}
 
 	// Check for updates
 	hasUpdate, latestVersion, err := update.CheckForUpdatesFunc(iostream)
 	if err != nil {
-		fmt.Fprintf(stderr, "Failed to check for updates: %s\n", err)
+		_, _ = fmt.Fprintf(stderr, "Failed to check for updates: %s\n", err)
 	} else if hasUpdate {
-		fmt.Fprintf(iostream.Out, "A new version of mycli is available: %s (current: %s)\n", latestVersion, build.Version)
-		fmt.Fprintf(iostream.Out, "Run 'mycli update' to update\n\n")
+		_, _ = fmt.Fprintf(iostream.Out, "A new version of mycli is available: %s (current: %s)\n", latestVersion, build.Version)
+		_, _ = fmt.Fprintf(iostream.Out, "Run 'mycli update' to update\n\n")
 	}
 
 	os_info := utils.GetOsInfo()
@@ -194,7 +194,7 @@ func runInteractiveMode(rootCmd *cobra.Command, ctx context.Context, iostream *i
 		Options: options,
 	}
 	if err := survey.AskOne(prompt, &selectedOption); err != nil {
-		fmt.Fprintf(iostream.ErrOut, "failed to select a command: %s\n", err)
+		_, _ = fmt.Fprintf(iostream.ErrOut, "failed to select a command: %s\n", err)
 		return exitError
 	}
 
@@ -204,7 +204,7 @@ func runInteractiveMode(rootCmd *cobra.Command, ctx context.Context, iostream *i
 		Message: fmt.Sprintf("Do you want to run the '%s' command?", selectedOption),
 	}
 	if err := survey.AskOne(confirmPrompt, &confirm); err != nil {
-		fmt.Fprintf(iostream.ErrOut, "failed to confirm the command: %s\n", err)
+		_, _ = fmt.Fprintf(iostream.ErrOut, "failed to confirm the command: %s\n", err)
 		return exitError
 	}
 
@@ -225,14 +225,14 @@ func handleExecutionError(err error, iostream *iostreams.IOStreams) {
 	var pagerPipeError *iostreams.ErrClosedPagerPipe
 	var noResultsError utils.NoResultsError
 
-	if err == utils.SilentError {
+	if err == utils.ErrSilent {
 		return
-	} else if err == utils.PendingError {
+	} else if err == utils.ErrPending {
 		return
 	} else if utils.IsUserCancellation(err) {
 		if errors.Is(err, terminal.InterruptErr) {
 			// ensure the next shell prompt will start on its own line
-			fmt.Fprint(iostream.ErrOut, "\n")
+			_, _ = fmt.Fprint(iostream.ErrOut, "\n")
 		}
 		return
 	} else if errors.As(err, &pagerPipeError) {
@@ -240,14 +240,14 @@ func handleExecutionError(err error, iostream *iostreams.IOStreams) {
 		return
 	} else if errors.As(err, &noResultsError) {
 		if iostream.IsStdoutTTY() {
-			fmt.Fprintln(iostream.ErrOut, noResultsError.Error())
+			_, _ = fmt.Fprintln(iostream.ErrOut, noResultsError.Error())
 		}
 		// no results is not a command failure
 		return
-	} else if err == utils.ConfigNotFoundError {
-		fmt.Fprintln(iostream.ErrOut, iostream.ColorScheme().Red("Config file is invalid for tools install, skipping..."))
+	} else if err == utils.ErrConfigNotFound {
+		_, _ = fmt.Fprintln(iostream.ErrOut, iostream.ColorScheme().Red("Config file is invalid for tools install, skipping..."))
 		return
 	}
 
-	fmt.Fprintf(iostream.ErrOut, "Error: %v\n", err)
+	_, _ = fmt.Fprintf(iostream.ErrOut, "Error: %v\n", err)
 }

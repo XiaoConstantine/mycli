@@ -181,7 +181,9 @@ func TestNewInstallToolsCmd_PostInstall(t *testing.T) {
 	// Create a temporary config file
 	tempFile, err := os.CreateTemp("", "test_config*.yaml")
 	assert.NoError(t, err)
-	defer os.Remove(tempFile.Name())
+	defer func() {
+		assert.NoError(t, os.Remove(tempFile.Name()))
+	}()
 
 	// Write test configuration to the temp file
 	configContent := `

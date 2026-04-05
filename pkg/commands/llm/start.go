@@ -261,7 +261,9 @@ func runForeground(ctx context.Context, iostream *iostreams.IOStreams, backend B
 	if err != nil {
 		return err
 	}
-	defer logFile.Close()
+	defer func() {
+		_ = logFile.Close()
+	}()
 
 	cmd := execCommandContext(ctx, spec.Program, spec.Args...)
 	cmd.Env = append(os.Environ(), formatEnv(spec.Env)...)
@@ -357,19 +359,19 @@ func formatEnv(values map[string]string) []string {
 }
 
 func printInstanceSummary(iostream *iostreams.IOStreams, state InstanceState, prefix string) {
-	fmt.Fprintln(iostream.Out, prefix)
-	fmt.Fprintf(iostream.Out, "Runtime: %s\n", state.Runtime)
-	fmt.Fprintf(iostream.Out, "Endpoint: %s\n", formatBaseURL(state.Host, state.Port))
+	_, _ = fmt.Fprintln(iostream.Out, prefix)
+	_, _ = fmt.Fprintf(iostream.Out, "Runtime: %s\n", state.Runtime)
+	_, _ = fmt.Fprintf(iostream.Out, "Endpoint: %s\n", formatBaseURL(state.Host, state.Port))
 	if state.Model != "" {
-		fmt.Fprintf(iostream.Out, "Model: %s\n", state.Model)
+		_, _ = fmt.Fprintf(iostream.Out, "Model: %s\n", state.Model)
 	}
 	if state.ModelPath != "" {
-		fmt.Fprintf(iostream.Out, "Model Path: %s\n", state.ModelPath)
+		_, _ = fmt.Fprintf(iostream.Out, "Model Path: %s\n", state.ModelPath)
 	}
 	if state.TMuxWindow != "" {
-		fmt.Fprintf(iostream.Out, "tmux: %s:%s\n", state.TMuxSession, state.TMuxWindow)
+		_, _ = fmt.Fprintf(iostream.Out, "tmux: %s:%s\n", state.TMuxSession, state.TMuxWindow)
 	}
-	fmt.Fprintf(iostream.Out, "Logs: %s\n", state.LogPath)
+	_, _ = fmt.Fprintf(iostream.Out, "Logs: %s\n", state.LogPath)
 }
 
 var ErrAlreadyRunning = fmt.Errorf("llm instance already running")

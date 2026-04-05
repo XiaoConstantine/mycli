@@ -190,11 +190,15 @@ func TestNewCmdHomeBrew(t *testing.T) {
 func TestUpdatePath(t *testing.T) {
 	tempDir, err := os.MkdirTemp("", "homebrew_test")
 	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		require.NoError(t, os.RemoveAll(tempDir))
+	}()
 
 	origHome := os.Getenv("HOME")
-	defer os.Setenv("HOME", origHome)
-	os.Setenv("HOME", tempDir)
+	defer func() {
+		require.NoError(t, os.Setenv("HOME", origHome))
+	}()
+	require.NoError(t, os.Setenv("HOME", tempDir))
 
 	tests := []struct {
 		name           string
@@ -239,7 +243,7 @@ func TestUpdatePath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			os.RemoveAll(tempDir)
+			require.NoError(t, os.RemoveAll(tempDir))
 			if err := os.MkdirAll(tempDir, 0755); err != nil {
 				return
 

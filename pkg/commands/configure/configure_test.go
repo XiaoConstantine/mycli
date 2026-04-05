@@ -30,7 +30,9 @@ func TestConfigureToolsFromConfig(t *testing.T) {
 	// Create a temporary directory for test files
 	tempDir, err := os.MkdirTemp("", "test-configure")
 	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		require.NoError(t, os.RemoveAll(tempDir))
+	}()
 
 	// Create a test server to serve configuration files
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +72,9 @@ func TestConfigureTool(t *testing.T) {
 	// Create a temporary directory for test files
 	tempDir, err := os.MkdirTemp("", "test-configure-tool")
 	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		require.NoError(t, os.RemoveAll(tempDir))
+	}()
 
 	// Create a test server to serve configuration files
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

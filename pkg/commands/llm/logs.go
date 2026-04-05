@@ -47,7 +47,7 @@ func NewLogsCmd(iostream *iostreams.IOStreams, options *commandOptions) *cobra.C
 				if err != nil {
 					return err
 				}
-				fmt.Fprintln(iostream.Out, tail)
+				_, _ = fmt.Fprintln(iostream.Out, tail)
 				return nil
 			}
 
@@ -56,7 +56,7 @@ func NewLogsCmd(iostream *iostreams.IOStreams, options *commandOptions) *cobra.C
 				if err != nil {
 					return err
 				}
-				fmt.Fprintln(iostream.Out, captured)
+				_, _ = fmt.Fprintln(iostream.Out, captured)
 				return nil
 			}
 

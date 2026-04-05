@@ -50,7 +50,7 @@ func stopInstance(ctx context.Context, iostream *iostreams.IOStreams, state Inst
 		if err := removeState(paths.StatePath); err != nil {
 			return err
 		}
-		fmt.Fprintf(iostream.Out, "Removed mycli state for external %s instance. The daemon is still running.\n", state.Runtime)
+		_, _ = fmt.Fprintf(iostream.Out, "Removed mycli state for external %s instance. The daemon is still running.\n", state.Runtime)
 		return nil
 	}
 
@@ -65,7 +65,7 @@ func stopInstance(ctx context.Context, iostream *iostreams.IOStreams, state Inst
 		if err := removeState(paths.StatePath); err != nil {
 			return err
 		}
-		fmt.Fprintf(iostream.Out, "Stopped foreground llm instance for profile %q.\n", state.Profile)
+		_, _ = fmt.Fprintf(iostream.Out, "Stopped foreground llm instance for profile %q.\n", state.Profile)
 		return nil
 	}
 
@@ -81,13 +81,13 @@ func stopInstance(ctx context.Context, iostream *iostreams.IOStreams, state Inst
 		if err := removeState(paths.StatePath); err != nil {
 			return err
 		}
-		fmt.Fprintf(iostream.Out, "Stopped llm instance for profile %q.\n", state.Profile)
+		_, _ = fmt.Fprintf(iostream.Out, "Stopped llm instance for profile %q.\n", state.Profile)
 		return nil
 	}
 
 	if err := removeState(paths.StatePath); err != nil {
 		return err
 	}
-	fmt.Fprintf(iostream.Out, "Removed stale llm state for profile %q.\n", state.Profile)
+	_, _ = fmt.Fprintf(iostream.Out, "Removed stale llm state for profile %q.\n", state.Profile)
 	return nil
 }

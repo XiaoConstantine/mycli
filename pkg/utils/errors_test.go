@@ -53,7 +53,7 @@ func TestIsUserCancellation(t *testing.T) {
 		err      error
 		expected bool
 	}{
-		{"CancelError", CancelError, true},
+		{"ErrCancel", ErrCancel, true},
 		{"InterruptErr", terminal.InterruptErr, true},
 		{"Other error", errors.New("other error"), false},
 		{"Nil error", nil, false},
@@ -105,8 +105,8 @@ func TestNoResultsError(t *testing.T) {
 }
 
 func TestPredefinedErrors(t *testing.T) {
-	errors := []error{SilentError, CancelError, PendingError, ConfigNotFoundError}
-	messages := []string{"SilentError", "CancelError", "PendingError", "Config file not found"}
+	errors := []error{ErrSilent, ErrCancel, ErrPending, ErrConfigNotFound}
+	messages := []string{"silent error", "cancel error", "pending error", "config file not found"}
 
 	for i, err := range errors {
 		if err.Error() != messages[i] {

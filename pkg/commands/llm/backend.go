@@ -2,6 +2,7 @@ package llm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -58,7 +59,7 @@ func selectBackend(ctx context.Context, req StartRequest) (Backend, error) {
 		errs = append(errs, err.Error())
 	}
 
-	return nil, fmt.Errorf(strings.Join(errs, "; "))
+	return nil, errors.New(strings.Join(errs, "; "))
 }
 
 func ensureBackendReady(ctx context.Context, runtimeName string, req StartRequest) (Backend, error) {

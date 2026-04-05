@@ -67,7 +67,9 @@ func (ollamaBackend) HealthCheck(ctx context.Context, state InstanceState) error
 	if err != nil {
 		return err
 	}
-	defer response.Body.Close()
+	defer func() {
+		_ = response.Body.Close()
+	}()
 
 	if response.StatusCode < 200 || response.StatusCode >= 400 {
 		return fmt.Errorf("ollama health check returned %s", response.Status)
@@ -108,7 +110,9 @@ func ollamaModelNames(ctx context.Context, host string, port int) ([]string, err
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
+	defer func() {
+		_ = response.Body.Close()
+	}()
 
 	if response.StatusCode < 200 || response.StatusCode >= 400 {
 		return nil, fmt.Errorf("ollama returned %s", response.Status)

@@ -81,7 +81,7 @@ func updateCLI(iostream *iostreams.IOStreams) error {
 
 	// Check if update is needed
 	if utils.CompareVersions(currentVersion, release.TagName) >= 0 {
-		fmt.Fprintln(iostream.Out, "You're already using the latest version of mycli.")
+		_, _ = fmt.Fprintln(iostream.Out, "You're already using the latest version of mycli.")
 		return nil
 	}
 
@@ -98,13 +98,15 @@ func updateCLI(iostream *iostreams.IOStreams) error {
 		return fmt.Errorf("no suitable release found for %s/%s", runtime.GOOS, runtime.GOARCH)
 	}
 
-	fmt.Fprintf(iostream.Out, "Downloading %s\n", assetURL)
+	_, _ = fmt.Fprintf(iostream.Out, "Downloading %s\n", assetURL)
 	// Download the new binary
 	resp, err := http.Get(assetURL)
 	if err != nil {
 		return fmt.Errorf("failed to download update: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	// Determine the install location
 	installPath := filepath.Join(installDir, "mycli")
@@ -114,28 +116,36 @@ func updateCLI(iostream *iostreams.IOStreams) error {
 	if err != nil {
 		return fmt.Errorf("failed to create temporary file: %w", err)
 	}
-	defer os.Remove(tmpFile.Name())
+	defer func() {
+		_ = os.Remove(tmpFile.Name())
+	}()
 
 	// Copy the downloaded content to the temporary file
 	_, err = io.Copy(tmpFile, resp.Body)
 	if err != nil {
 		return fmt.Errorf("failed to write update to temporary file: %w", err)
 	}
-	tmpFile.Close()
+	if err := tmpFile.Close(); err != nil {
+		return fmt.Errorf("failed to close temporary file: %w", err)
+	}
 
 	// Open the temporary file for reading
 	tmpFile, err = os.Open(tmpFile.Name())
 	if err != nil {
 		return fmt.Errorf("failed to open temporary file: %w", err)
 	}
-	defer tmpFile.Close()
+	defer func() {
+		_ = tmpFile.Close()
+	}()
 
 	// Create a gzip reader
 	gzr, err := gzip.NewReader(tmpFile)
 	if err != nil {
 		return fmt.Errorf("failed to create gzip reader: %w", err)
 	}
-	defer gzr.Close()
+	defer func() {
+		_ = gzr.Close()
+	}()
 
 	// Create a tar reader
 	tr := tar.NewReader(gzr)
@@ -156,13 +166,17 @@ func updateCLI(iostream *iostreams.IOStreams) error {
 			if err != nil {
 				return fmt.Errorf("failed to create temporary file for extracted binary: %w", err)
 			}
-			defer os.Remove(extractedTmp.Name())
+			defer func() {
+				_ = os.Remove(extractedTmp.Name())
+			}()
 
 			// Copy the file contents
 			if _, err := io.Copy(extractedTmp, tr); err != nil {
 				return fmt.Errorf("failed to extract binary: %w", err)
 			}
-			extractedTmp.Close()
+			if err := extractedTmp.Close(); err != nil {
+				return fmt.Errorf("failed to close extracted binary: %w", err)
+			}
 
 			// Make the temporary file executable
 			if err := os.Chmod(extractedTmp.Name(), 0755); err != nil {
@@ -174,7 +188,7 @@ func updateCLI(iostream *iostreams.IOStreams) error {
 				return fmt.Errorf("failed to replace old binary: %w", err)
 			}
 
-			fmt.Fprintf(iostream.Out, "mycli has been updated successfully to version %s!\n", release.TagName)
+			_, _ = fmt.Fprintf(iostream.Out, "mycli has been updated successfully to version %s!\n", release.TagName)
 			return nil
 		}
 	}
@@ -213,7 +227,9 @@ func ensurePathInZshrc(installDir string) error {
 		if err != nil {
 			return fmt.Errorf("failed to open .zshrc: %w", err)
 		}
-		defer f.Close()
+		defer func() {
+			_ = f.Close()
+		}()
 
 		if _, err := f.WriteString("\n" + pathLine + "\n"); err != nil {
 			return fmt.Errorf("failed to write to .zshrc: %w", err)
@@ -242,7 +258,9 @@ var getLatestRelease = func() (*githubRelease, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch latest release: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)

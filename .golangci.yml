@@ -1,11 +1,11 @@
+version: "2"
+
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck
     - godot
-    - gosimple
     - govet
     - ineffassign
     - staticcheck
-    - typecheck
     - unused

@@ -339,7 +339,7 @@ func (s *IOStreams) StopAlternateScreenBuffer() {
 	defer s.alternateScreenBufferMu.Unlock()
 
 	if s.alternateScreenBufferActive {
-		fmt.Fprint(s.Out, "\x1b[?1049l")
+		_, _ = fmt.Fprint(s.Out, "\x1b[?1049l")
 		s.alternateScreenBufferActive = false
 	}
 }
@@ -351,9 +351,9 @@ func (s *IOStreams) SetAlternateScreenBufferEnabled(enabled bool) {
 func (s *IOStreams) RefreshScreen() {
 	if s.IsStdoutTTY() {
 		// Move cursor to 0,0
-		fmt.Fprint(s.Out, "\x1b[0;0H")
+		_, _ = fmt.Fprint(s.Out, "\x1b[0;0H")
 		// Clear from cursor to bottom of screen
-		fmt.Fprint(s.Out, "\x1b[J")
+		_, _ = fmt.Fprint(s.Out, "\x1b[J")
 	}
 }
 
@@ -381,7 +381,9 @@ func (s *IOStreams) ReadUserFile(fn string) ([]byte, error) {
 			return nil, err
 		}
 	}
-	defer r.Close()
+	defer func() {
+		_ = r.Close()
+	}()
 	return io.ReadAll(r)
 }
 
@@ -433,7 +435,7 @@ func System() *IOStreams {
 	}
 
 	if stdoutIsTTY && func() bool {
-		var _ bool = terminal.IsTrueColorSupported()
+		_ = terminal.IsTrueColorSupported()
 		return hasAlternateScreenBuffer()
 	}() {
 		io.alternateScreenBufferEnabled = true

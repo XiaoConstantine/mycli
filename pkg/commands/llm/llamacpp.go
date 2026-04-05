@@ -74,7 +74,9 @@ func (llamacppBackend) HealthCheck(ctx context.Context, state InstanceState) err
 	if err != nil {
 		return err
 	}
-	defer response.Body.Close()
+	defer func() {
+		_ = response.Body.Close()
+	}()
 
 	if response.StatusCode < 200 || response.StatusCode >= 400 {
 		return fmt.Errorf("llama.cpp health check returned %s", response.Status)

@@ -61,7 +61,7 @@ func NewCmdXcode(iostream *iostreams.IOStreams, statsCollector *utils.StatsColle
 			duration := time.Since(startTime)
 			stats.Duration = duration
 			if err != nil {
-				fmt.Fprintf(iostream.ErrOut, "Failed to install xcode: %v\n", err)
+				_, _ = fmt.Fprintf(iostream.ErrOut, "Failed to install xcode: %v\n", err)
 				stats.Status = "error"
 				statsCollector.AddStat(stats)
 

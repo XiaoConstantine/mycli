@@ -48,7 +48,7 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams, userUtils utils.UserUtils, st
 
 			isAdmin := userUtils.IsAdmin(ctx, currentUser)
 			if IsHomebrewInstalled(ctx) {
-				fmt.Fprintln(iostream.Out, "Homebrew is installed.")
+				_, _ = fmt.Fprintln(iostream.Out, "Homebrew is installed.")
 				duration := time.Since(startTime)
 				stats.Duration = duration
 				stats.Status = "success"
@@ -59,7 +59,7 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams, userUtils utils.UserUtils, st
 			}
 
 			if !isAdmin {
-				fmt.Fprintln(iostream.ErrOut, cs.Red("You need to be an administrator to install Homebrew. Please run this command from an admin account."))
+				_, _ = fmt.Fprintln(iostream.ErrOut, cs.Red("You need to be an administrator to install Homebrew. Please run this command from an admin account."))
 				duration := time.Since(startTime)
 				stats.Duration = duration
 				stats.Status = "error"
@@ -69,7 +69,7 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams, userUtils utils.UserUtils, st
 				return os.ErrPermission
 			}
 
-			fmt.Fprint(iostream.Out, cs.Green("Installing homebrew with su current user, enter your password when prompt\n"))
+			_, _ = fmt.Fprint(iostream.Out, cs.Green("Installing homebrew with su current user, enter your password when prompt\n"))
 			installCmd := execCommandContext(ctx, "su", currentUser.Username, "-c", `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`)
 
 			installCmd.Stdout = os.Stdout
@@ -80,7 +80,7 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams, userUtils utils.UserUtils, st
 			duration := time.Since(startTime)
 			stats.Duration = duration
 			if err != nil {
-				fmt.Fprintf(iostream.ErrOut, "Failed to install Homebrew: %v\n", err)
+				_, _ = fmt.Fprintf(iostream.ErrOut, "Failed to install Homebrew: %v\n", err)
 				stats.Status = "error"
 				statsCollector.AddStat(stats)
 
@@ -91,11 +91,11 @@ func NewCmdHomeBrew(iostream *iostreams.IOStreams, userUtils utils.UserUtils, st
 
 			// Update PATH after successful installation
 			if err := updatePath(ctx, iostream); err != nil {
-				fmt.Fprintf(iostream.ErrOut, "Warning: %v\n", err)
+				_, _ = fmt.Fprintf(iostream.ErrOut, "Warning: %v\n", err)
 				// We don't return here because Homebrew is still installed successfully
 			} else {
-				fmt.Fprintln(iostream.Out, cs.Green("Homebrew installed successfully and PATH updated."))
-				fmt.Fprintln(iostream.Out, "If you don't see the changes immediately, you may need to restart your terminal or manually source your shell configuration file.")
+				_, _ = fmt.Fprintln(iostream.Out, cs.Green("Homebrew installed successfully and PATH updated."))
+				_, _ = fmt.Fprintln(iostream.Out, "If you don't see the changes immediately, you may need to restart your terminal or manually source your shell configuration file.")
 			}
 			stats.Status = "success"
 			statsCollector.AddStat(stats)
@@ -154,7 +154,7 @@ func updatePath(ctx context.Context, iostream *iostreams.IOStreams) error {
 				if err := os.WriteFile(configPath, []byte(newContent), 0644); err != nil {
 					return fmt.Errorf("failed to update %s: %v", file, err)
 				}
-				fmt.Fprintf(iostream.Out, "Updated %s with Homebrew path\n", file)
+				_, _ = fmt.Fprintf(iostream.Out, "Updated %s with Homebrew path\n", file)
 				return nil // Exit after updating the first file that needs it
 			}
 		}
@@ -166,10 +166,10 @@ func updatePath(ctx context.Context, iostream *iostreams.IOStreams) error {
 		cmd.Stdout = iostream.Out
 		cmd.Stderr = iostream.ErrOut
 		if err := cmd.Run(); err != nil {
-			fmt.Fprintf(iostream.ErrOut, "Warning: Failed to source updated configuration: %v\n", err)
-			fmt.Fprintln(iostream.Out, "You may need to restart your terminal or manually source your shell configuration file.")
+			_, _ = fmt.Fprintf(iostream.ErrOut, "Warning: Failed to source updated configuration: %v\n", err)
+			_, _ = fmt.Fprintln(iostream.Out, "You may need to restart your terminal or manually source your shell configuration file.")
 		} else {
-			fmt.Fprintln(iostream.Out, "Shell configuration has been sourced.")
+			_, _ = fmt.Fprintln(iostream.Out, "Shell configuration has been sourced.")
 		}
 	}
 

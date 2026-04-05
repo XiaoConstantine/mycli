@@ -81,7 +81,7 @@ func newExtensionInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 			// Remove the ExtensionPrefix if it's already there
 			extName = strings.TrimPrefix(extName, ExtensionPrefix)
 			extPath := filepath.Join(extDir, ExtensionPrefix+extName)
-			fmt.Fprintf(iostream.Out, "Extension path: %s\n", extPath)
+			_, _ = fmt.Fprintf(iostream.Out, "Extension path: %s\n", extPath)
 
 			if err := os.MkdirAll(extDir, 0755); err != nil {
 				return fmt.Errorf("failed to create extensions directory: %w", err)
@@ -95,7 +95,7 @@ func newExtensionInstallCmd(iostream *iostreams.IOStreams) *cobra.Command {
 				return fmt.Errorf("failed to clone extension repository: %w", err)
 			}
 
-			fmt.Fprintf(iostream.Out, "Successfully installed extension '%s'\n", extName)
+			_, _ = fmt.Fprintf(iostream.Out, "Successfully installed extension '%s'\n", extName)
 			return nil
 		},
 	}
@@ -113,7 +113,7 @@ func newExtensionListCmd(iostream *iostreams.IOStreams) *cobra.Command {
 			entries, err := os.ReadDir(extDir)
 			if err != nil {
 				if os.IsNotExist(err) {
-					fmt.Fprintln(iostream.Out, "No extensions installed")
+					_, _ = fmt.Fprintln(iostream.Out, "No extensions installed")
 					return nil
 				}
 				return fmt.Errorf("failed to read extensions directory: %w", err)
@@ -121,7 +121,7 @@ func newExtensionListCmd(iostream *iostreams.IOStreams) *cobra.Command {
 
 			for _, entry := range entries {
 				if entry.IsDir() && strings.HasPrefix(entry.Name(), ExtensionPrefix) {
-					fmt.Fprintln(iostream.Out, entry.Name()[len(ExtensionPrefix):])
+					_, _ = fmt.Fprintln(iostream.Out, entry.Name()[len(ExtensionPrefix):])
 				}
 			}
 			return nil
@@ -146,7 +146,7 @@ func newExtensionRemoveCmd(iostream *iostreams.IOStreams) *cobra.Command {
 				return fmt.Errorf("failed to remove extension: %w", err)
 			}
 
-			fmt.Fprintf(iostream.Out, "Successfully removed extension '%s'\n", extName)
+			_, _ = fmt.Fprintf(iostream.Out, "Successfully removed extension '%s'\n", extName)
 			return nil
 		},
 	}
@@ -173,7 +173,7 @@ func newExtensionUpdateCmd(iostream *iostreams.IOStreams) *cobra.Command {
 				return fmt.Errorf("failed to update extension: %w", err)
 			}
 
-			fmt.Fprintf(iostream.Out, "Successfully updated extension '%s'\n", extName)
+			_, _ = fmt.Fprintf(iostream.Out, "Successfully updated extension '%s'\n", extName)
 			return nil
 		},
 	}

@@ -32,7 +32,7 @@ func NewStatusCmd(iostream *iostreams.IOStreams, options *commandOptions) *cobra
 				return err
 			}
 			if state == nil {
-				fmt.Fprintf(iostream.Out, "No llm instance is tracked for profile %q.\n", profileName)
+				_, _ = fmt.Fprintf(iostream.Out, "No llm instance is tracked for profile %q.\n", profileName)
 				return nil
 			}
 
@@ -42,21 +42,21 @@ func NewStatusCmd(iostream *iostreams.IOStreams, options *commandOptions) *cobra
 			}
 			if !healthy {
 				_ = cleanupStaleState(ctx, paths, *state)
-				fmt.Fprintf(iostream.Out, "The llm instance for profile %q is stale and has been cleaned up.\n", profileName)
+				_, _ = fmt.Fprintf(iostream.Out, "The llm instance for profile %q is stale and has been cleaned up.\n", profileName)
 				return nil
 			}
 
-			fmt.Fprintf(iostream.Out, "Profile: %s\n", state.Profile)
-			fmt.Fprintf(iostream.Out, "Runtime: %s\n", state.Runtime)
-			fmt.Fprintf(iostream.Out, "Endpoint: %s\n", formatBaseURL(state.Host, state.Port))
-			fmt.Fprintf(iostream.Out, "Health: %s\n", state.HealthURL)
-			fmt.Fprintf(iostream.Out, "Status: %s\n", state.Status)
+			_, _ = fmt.Fprintf(iostream.Out, "Profile: %s\n", state.Profile)
+			_, _ = fmt.Fprintf(iostream.Out, "Runtime: %s\n", state.Runtime)
+			_, _ = fmt.Fprintf(iostream.Out, "Endpoint: %s\n", formatBaseURL(state.Host, state.Port))
+			_, _ = fmt.Fprintf(iostream.Out, "Health: %s\n", state.HealthURL)
+			_, _ = fmt.Fprintf(iostream.Out, "Status: %s\n", state.Status)
 			if state.External {
-				fmt.Fprintln(iostream.Out, "Ownership: external")
+				_, _ = fmt.Fprintln(iostream.Out, "Ownership: external")
 			} else if state.TMuxWindow != "" {
-				fmt.Fprintf(iostream.Out, "tmux: %s:%s\n", state.TMuxSession, state.TMuxWindow)
+				_, _ = fmt.Fprintf(iostream.Out, "tmux: %s:%s\n", state.TMuxSession, state.TMuxWindow)
 			}
-			fmt.Fprintf(iostream.Out, "Logs: %s\n", state.LogPath)
+			_, _ = fmt.Fprintf(iostream.Out, "Logs: %s\n", state.LogPath)
 
 			return nil
 		},

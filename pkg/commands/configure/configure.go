@@ -65,7 +65,7 @@ func NewConfigureCmd(iostream *iostreams.IOStreams) *cobra.Command {
 				fmt.Println(configPath)
 				// Validate the file path
 				if _, err := os.Stat(configPath); os.IsNotExist(err) {
-					fmt.Fprintf(iostream.ErrOut, "Error: Config file does not exist at path: %s\n", configPath)
+					_, _ = fmt.Fprintf(iostream.ErrOut, "Error: Config file does not exist at path: %s\n", configPath)
 					return err
 				}
 
@@ -75,7 +75,7 @@ func NewConfigureCmd(iostream *iostreams.IOStreams) *cobra.Command {
 				}
 				if force {
 					if err := cmd.Flags().Set("force", "true"); err != nil {
-						fmt.Fprintf(iostream.ErrOut, "failed to set force flag: %s\n", err)
+						_, _ = fmt.Fprintf(iostream.ErrOut, "failed to set force flag: %s\n", err)
 						return err
 					}
 
@@ -114,11 +114,11 @@ func NewConfigureCmd(iostream *iostreams.IOStreams) *cobra.Command {
 				fmt.Println(configPath)
 				// Validate the file path
 				if _, err := os.Stat(configPath); os.IsNotExist(err) {
-					fmt.Fprintf(iostream.ErrOut, "Error: Config file does not exist at path: %s\n", configPath)
+					_, _ = fmt.Fprintf(iostream.ErrOut, "Error: Config file does not exist at path: %s\n", configPath)
 					return err
 				}
 				if err := cmd.Flags().Set("config", configPath); err != nil {
-					fmt.Fprintf(iostream.ErrOut, "failed to set config flag: %s\n", err)
+					_, _ = fmt.Fprintf(iostream.ErrOut, "failed to set config flag: %s\n", err)
 					return err
 				}
 				// Prompt for force flag
@@ -131,13 +131,13 @@ func NewConfigureCmd(iostream *iostreams.IOStreams) *cobra.Command {
 				}
 				config, err := utils.LoadToolsConfig(configFile)
 				if err != nil {
-					fmt.Fprintf(iostream.ErrOut, cs.Red("Error loading configuration: %v\n"), err)
-					return utils.ConfigNotFoundError
+					_, _ = fmt.Fprintf(iostream.ErrOut, cs.Red("Error loading configuration: %v\n"), err)
+					return utils.ErrConfigNotFound
 				}
 
 				if force {
 					if err := cmd.Flags().Set("force", "true"); err != nil {
-						fmt.Fprintf(iostream.ErrOut, "failed to set force flag: %s\n", err)
+						_, _ = fmt.Fprintf(iostream.ErrOut, "failed to set force flag: %s\n", err)
 						return err
 					}
 				}
@@ -173,10 +173,10 @@ func ConfigureToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolC
 
 		toolStartTime := time.Now()
 
-		fmt.Fprintf(iostream.Out, cs.Green("Configuring %s...\n"), item.Name)
+		_, _ = fmt.Fprintf(iostream.Out, cs.Green("Configuring %s...\n"), item.Name)
 
 		if err := configureTool(item, toolCtx, force); err != nil {
-			fmt.Fprintf(iostream.ErrOut, cs.Red("Failed to configure %s: %v\n"), item.Name, err)
+			_, _ = fmt.Fprintf(iostream.ErrOut, cs.Red("Failed to configure %s: %v\n"), item.Name, err)
 			toolStat.Status = "error"
 			toolStat.Duration = time.Since(toolStartTime)
 			stats = append(stats, &toolStat)
@@ -194,7 +194,7 @@ func ConfigureToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolC
 		toolSpan.Finish()
 	}
 
-	fmt.Fprintln(iostream.Out, cs.GreenBold("All requested tools have been configured successfully."))
+	_, _ = fmt.Fprintln(iostream.Out, cs.GreenBold("All requested tools have been configured successfully."))
 	return stats, nil
 }
 
@@ -292,7 +292,9 @@ func downloadAndSaveConfig(configURL, installPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to download configuration: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to download configuration: HTTP status %d", resp.StatusCode)
@@ -302,7 +304,9 @@ func downloadAndSaveConfig(configURL, installPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create configuration file: %v", err)
 	}
-	defer out.Close()
+	defer func() {
+		_ = out.Close()
+	}()
 
 	if _, err = io.Copy(out, resp.Body); err != nil {
 		return fmt.Errorf("failed to write configuration: %v", err)

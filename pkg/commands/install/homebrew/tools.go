@@ -64,8 +64,8 @@ func NewInstallToolsCmd(iostream *iostreams.IOStreams, statsCollector *utils.Sta
 
 			config, err := utils.LoadToolsConfig(configFile)
 			if err != nil {
-				fmt.Fprintf(iostream.ErrOut, cs.Red("Error loading configuration: %v\n"), err)
-				return utils.ConfigNotFoundError
+				_, _ = fmt.Fprintf(iostream.ErrOut, cs.Red("Error loading configuration: %v\n"), err)
+				return utils.ErrConfigNotFound
 			}
 			toolStats, err = InstallToolsFromConfig(iostream, config, ctx, force)
 			for _, item := range toolStats {
@@ -112,11 +112,11 @@ func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolCon
 			Operation: "Install",
 		}
 
-		fmt.Fprintf(iostream.Out, cs.Green("Installing tool %s...\n"), tool)
+		_, _ = fmt.Fprintf(iostream.Out, cs.Green("Installing tool %s...\n"), tool)
 		if tool.InstallCommand != "" {
-			fmt.Fprintf(iostream.Out, "Installing %s using custom command %s...\n", tool.Name, tool.InstallCommand)
+			_, _ = fmt.Fprintf(iostream.Out, "Installing %s using custom command %s...\n", tool.Name, tool.InstallCommand)
 			if err := executeCommand(tool.InstallCommand, toolCtx); err != nil {
-				fmt.Fprintf(iostream.ErrOut, cs.Red("Failed to install %s: %v\n"), tool.Name, err)
+				_, _ = fmt.Fprintf(iostream.ErrOut, cs.Red("Failed to install %s: %v\n"), tool.Name, err)
 				toolStat.Status = "error"
 				toolStat.Duration = time.Since(toolStartTime)
 				stats = append(stats, &toolStat)
@@ -125,11 +125,11 @@ func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolCon
 				return stats, err
 			}
 			// Run post-install commands if they exist
-			if tool.PostInstall != nil && len(tool.PostInstall) > 0 {
+			if len(tool.PostInstall) > 0 {
 				for _, cmd := range tool.PostInstall {
 					expandedCmd := os.ExpandEnv(cmd) // Expand environment variables in the command
 					if err := executeCommand(expandedCmd, ctx); err != nil {
-						fmt.Fprintf(iostream.ErrOut, "Failed to run post-install command for %s: %v\n", tool.Name, err)
+						_, _ = fmt.Fprintf(iostream.ErrOut, "Failed to run post-install command for %s: %v\n", tool.Name, err)
 						// Decide whether to continue or return based on the error
 					}
 				}
@@ -147,7 +147,7 @@ func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolCon
 			if force {
 				command += " --force"
 			}
-			fmt.Fprintf(iostream.Out, "Installing %s using Homebrew with %s...\n", tool.Name, command)
+			_, _ = fmt.Fprintf(iostream.Out, "Installing %s using Homebrew with %s...\n", tool.Name, command)
 			if err := executeCommand(fmt.Sprintf("%s %s", command, tool.Name), toolCtx); err != nil {
 				toolStat.Status = "error"
 				toolStat.Duration = time.Since(toolStartTime)
@@ -155,17 +155,17 @@ func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolCon
 
 				toolSpan.SetTag("status", "failed")
 				toolSpan.SetTag("error", err)
-				fmt.Fprintf(iostream.ErrOut, cs.Red("Failed to install %s: %v\n"), tool.Name, err)
+				_, _ = fmt.Fprintf(iostream.ErrOut, cs.Red("Failed to install %s: %v\n"), tool.Name, err)
 				return stats, err
 			}
 
 			// Run post-install commands
 			// Run post-install commands if they exist
-			if tool.PostInstall != nil && len(tool.PostInstall) > 0 {
+			if len(tool.PostInstall) > 0 {
 				for _, cmd := range tool.PostInstall {
 					expandedCmd := os.ExpandEnv(cmd) // Expand environment variables in the command
 					if err := executeCommand(expandedCmd, ctx); err != nil {
-						fmt.Fprintf(iostream.ErrOut, "Failed to run post-install command for %s: %v\n", tool.Name, err)
+						_, _ = fmt.Fprintf(iostream.ErrOut, "Failed to run post-install command for %s: %v\n", tool.Name, err)
 						// Decide whether to continue or return based on the error
 					}
 				}
@@ -179,7 +179,7 @@ func InstallToolsFromConfig(iostream *iostreams.IOStreams, config *utils.ToolCon
 		toolSpan.Finish()
 	}
 
-	fmt.Fprintln(iostream.Out, cs.GreenBold("All requested tools and casks have been installed successfully."))
+	_, _ = fmt.Fprintln(iostream.Out, cs.GreenBold("All requested tools and casks have been installed successfully."))
 	return stats, nil
 }
 

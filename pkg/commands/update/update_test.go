@@ -63,7 +63,9 @@ func TestUpdateCLI(t *testing.T) {
 	// Create a temporary directory for testing
 	tempDir, err := os.MkdirTemp("", "mycli-test")
 	assert.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		assert.NoError(t, os.RemoveAll(tempDir))
+	}()
 
 	// Mock the install directory
 	originalEnsureInstallDirectory := ensureInstallDirectory

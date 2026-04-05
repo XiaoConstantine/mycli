@@ -40,7 +40,9 @@ func TestNewInstallCmd_NonInteractiveMode_Force(t *testing.T) {
 	// Create a temporary directory
 	tempDir, err := os.MkdirTemp("", "test-config-install")
 	assert.NoError(t, err)
-	defer os.RemoveAll(tempDir) // Clean up
+	defer func() {
+		assert.NoError(t, os.RemoveAll(tempDir))
+	}()
 
 	// Create a temporary config file
 	configContent := []byte(`
@@ -92,7 +94,9 @@ func TestNewInstallCmdFlagsErrorsEdgeCases(t *testing.T) {
 	// Create a temporary directory
 	tempDir, err := os.MkdirTemp("", "test-config-install")
 	assert.NoError(t, err)
-	defer os.RemoveAll(tempDir) // Clean up
+	defer func() {
+		assert.NoError(t, os.RemoveAll(tempDir))
+	}()
 
 	// Create a temporary config file
 	configContent := []byte(`
@@ -133,7 +137,7 @@ tools:
 			args: []string{"--non-interactive", "--force", "--config", configPath},
 			setupFunc: func() {
 				// Mock environment variable and file path resolution
-				os.Setenv("HOME", "/tmp")
+				assert.NoError(t, os.Setenv("HOME", "/tmp"))
 				outcomes := map[string]error{
 					"homebrew": nil, // Mock homebrew command to succeed
 					"xcode":    nil, // Mock xcode command to fail
@@ -143,7 +147,7 @@ tools:
 
 			},
 			cleanupFunc: func() {
-				os.Unsetenv("HOME")
+				assert.NoError(t, os.Unsetenv("HOME"))
 				mockSubcommands(cmd, map[string]error{})
 			},
 			expectErr:  false,
